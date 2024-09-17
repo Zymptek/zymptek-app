@@ -7,6 +7,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { cookies } from 'next/headers';
 import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
 
+export const dynamic = 'force-dynamic';
+
 const defaultUrl = process.env.VERCEL_URL
   ? `https://${process.env.VERCEL_URL}`
   : "http://localhost:3000";
