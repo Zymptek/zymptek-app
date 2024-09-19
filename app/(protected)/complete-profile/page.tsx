@@ -43,7 +43,6 @@ const COUNTRIES = [
     country: z.string().min(2, "Country is required"),
     companyAddress: z.string().min(10, "Company address is required"),
     designation: z.string().min(2, "Designation is required").optional(),
-    companyStartDate: z.string().min(2, "Company start date is required"),
     companyProfile: z.string().min(50, "Please provide a detailed company profile"),
     logo: z.any()
       .refine((file) => file?.size <= MAX_FILE_SIZE, "Max file size is 5MB")
@@ -208,7 +207,6 @@ const ProfileCompletionPage: React.FC = () => {
           company: '',
           companyAddress: '',
           designation: '',
-          companyStartDate: '',
           logo: null,
           poster: null,
           companyProfile: ''
@@ -247,7 +245,6 @@ const ProfileCompletionPage: React.FC = () => {
               profileData.company_profile = {
                 company_name: sellerData.company,
                 company_address: sellerData.companyAddress,
-                company_start_date: sellerData.companyStartDate,
                 company_description: sellerData.companyProfile,
                 company_logo_url: sellerData.logo ? await uploadFile(sellerData.logo, 'logos') : null,
                 company_poster_url: sellerData.poster ? await uploadFile(sellerData.poster, 'posters') : null,
@@ -457,7 +454,7 @@ const ProfileCompletionPage: React.FC = () => {
                       type="phone"
                       placeholder="Phone Number"
                       {...sellerForm.register('phoneNumber')}
-                      error={sellerForm.formState.errors.companyStartDate}
+                      error={sellerForm.formState.errors.phoneNumber}
                     />
                     <AnimatedInput
                       placeholder="Company Name"
@@ -474,13 +471,6 @@ const ProfileCompletionPage: React.FC = () => {
                       {...sellerForm.register('designation')}
                       error={sellerForm.formState.errors.designation}
                     />
-                    <AnimatedInput
-                      type="date"
-                      placeholder="Company Start Date"
-                      {...sellerForm.register('companyStartDate')}
-                      error={sellerForm.formState.errors.companyStartDate}
-                    />
-                    
                     <AnimatedTextarea
                       placeholder="Tell us about your company (min. 50 characters)"
                       {...sellerForm.register('companyProfile')}

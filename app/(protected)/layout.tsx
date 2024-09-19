@@ -1,9 +1,10 @@
 // app/(protected)/layout.tsx
 'use client';
 
-import { useEffect } from 'react';
+import { Suspense, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
+import { Loading } from '../../components/Loading';
 
 export default function ProtectedLayout({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -15,9 +16,5 @@ export default function ProtectedLayout({ children }: { children: React.ReactNod
     }
   }, [user, loading, router]);
 
-  if (loading) {
-    return <div>Loading...</div>; // Display a loading spinner if necessary
-  }
-
-  return <>{children}</>;
+  return <Suspense fallback={<Loading/>}>{children}</Suspense>;
 }

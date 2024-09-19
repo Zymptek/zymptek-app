@@ -13,7 +13,7 @@ import { revalidatePath } from 'next/cache';
 
 const Navbar = () => {
 
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
 
@@ -118,6 +118,7 @@ const Navbar = () => {
                   >
                     <MessageSquareText />
                   </motion.button>
+                  <Link href={`/seller/${user!.id}`}>
                   <motion.button
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.95 }}
@@ -125,6 +126,7 @@ const Navbar = () => {
                   >
                     <User />
                   </motion.button>
+                  </Link>
                   <motion.button
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.95 }}
