@@ -30,12 +30,12 @@ const StickyContactCard = ({ supplierInfo }: { supplierInfo: SupplierInfo }) => 
       {
         supplierInfo.isAuthUser ?
         <Link href={`/update-profile/${supplierInfo.sellerId}`} passHref>
-                <Button className="flex items-center px-4 py-2 rounded-full bg-brand-200 text-white hover:bg-brand-100 transition-colors duration-300 w-full mb-2">
+                <Button className="flex items-center px-4 py-2 rounded-full btn-primary text-white transition-transform hover:scale-105 duration-300 w-full mb-2">
                   Update Profile
                 </Button>
               </Link>
         :
-        <Button className="flex items-center px-4 py-2 rounded-full bg-brand-200 text-white hover:bg-brand-100 transition-colors duration-300 w-full">
+        <Button className="flex items-center px-4 py-2 rounded-full btn-primary text-white transition-transform hover:scale-105 duration-300 w-full">
         <Send className="mr-2" />
         Send Inquiry
       </Button>

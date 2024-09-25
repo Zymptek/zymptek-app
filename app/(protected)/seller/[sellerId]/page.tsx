@@ -11,6 +11,10 @@ import { notFound, useRouter } from 'next/navigation';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/context/AuthContext';
+import ProductCard from '@/components/seller-profile/product-card/ProductCard';
+import { Tables } from '@/lib/database.types';
+
+type User = Tables<'profiles'>
 
 type SellerData = {
   overview?: {
@@ -86,9 +90,12 @@ const SellerProfilePage =  ({ params }: { params: { sellerId: string } }) => {
   const { sellerId } = params;
   const supabase = createClientComponentClient()
   const { toast } = useToast();
-  const [seller, setSeller] = useState<SellerData | null>(null);
+  const [seller, setSeller] = useState<User | null>(null);
+  const [sellerCompanyProfile, setSellerCompanyProfile] = useState<SellerData | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter()
+
+
   const { user } = useAuth();
 
   // Fetch the full profile data on component mount
@@ -97,7 +104,7 @@ const SellerProfilePage =  ({ params }: { params: { sellerId: string } }) => {
       setLoading(true);
       const { data, error } = await supabase
         .from('profiles')
-        .select('company_profile')
+        .select('*')
         .eq('id', sellerId)
         .single();
 
@@ -109,21 +116,24 @@ const SellerProfilePage =  ({ params }: { params: { sellerId: string } }) => {
 
       if (data) {
         // Assuming the company profile structure is similar to SellerData
-        setSeller(data.company_profile);
+        setSellerCompanyProfile(data.company_profile);
+        setSeller(data);
       }
       setLoading(false);
+
     };
 
     fetchProfile();
   }, [sellerId]);
 
   const handleSubmit = (section: string) => async (newData: any) => {
-    if (!seller) return;
+    if (!sellerCompanyProfile) return;
 
     try {
       // Merge the new data under the appropriate section
+
       const updatedProfile = {
-        ...seller,
+        ...sellerCompanyProfile,
         [section]: {
           ...newData,
         },
@@ -162,7 +172,7 @@ const SellerProfilePage =  ({ params }: { params: { sellerId: string } }) => {
     router.push("/sign-in")
   }
 
-  if (!seller) {
+  if (!sellerCompanyProfile || !seller) {
     notFound()
   }
 
@@ -172,13 +182,15 @@ const SellerProfilePage =  ({ params }: { params: { sellerId: string } }) => {
         <div className='sticky top-0 z-10 shadow-l'>
           <header className="bg-gradient-brand text-white p-4 rounded-t-lg">
             <div className="container mx-auto flex items-center flex-wrap">
-              <Image src={seller.company_logo_url} alt={seller.company_name} width={100} height={100} className="mr-4" />
+              <Image src={sellerCompanyProfile.company_logo_url} alt={sellerCompanyProfile.company_name} width={100} height={100} className="mr-4" />
               <div>
-                <h1 className="text-2xl font-bold">{seller.company_name}</h1>
-                <p>{seller.company_address}</p>
+                <h1 className="text-2xl font-bold">{sellerCompanyProfile.company_name}</h1>
+
+                <p>{sellerCompanyProfile.company_address}</p>
               </div>
             </div>
           </header>
+
           <StickySubNav />
         </div>
 
@@ -189,10 +201,11 @@ const SellerProfilePage =  ({ params }: { params: { sellerId: string } }) => {
                 title="Overview"
                 id="overview"
                 sellerId={sellerId}
-                data={seller.overview}
+                data={sellerCompanyProfile.overview}
                 fieldConfig={overviewFieldConfig!}
                 schema={overviewSchema}
                 onSubmit={handleSubmit('overview')}
+
               />
 
               <SellerProfileCards
@@ -200,20 +213,26 @@ const SellerProfilePage =  ({ params }: { params: { sellerId: string } }) => {
                 title="Production"
                 id="production"
                 sellerId={sellerId}
-                data={seller.productionCapacity!}
+                data={sellerCompanyProfile.productionCapacity!}
                 fieldConfig={productionCapacityFieldConfig}
                 schema={productionCapacitySchema}
+
                 onSubmit={handleSubmit('productionCapacity')}
               />
 
+            <ProductCard user={seller as User} />
+
             {/* Add more sections here as needed */}
+
           </div>
 
+
           <div className="w-full md:w-1/4 mt-6 md:mt-0">
-            <StickyContactCard supplierInfo={{isAuthUser: sellerId === user!.id, sellerId ,companyName: seller.company_name, location: seller.company_address, description: seller.company_description}} />
+            <StickyContactCard supplierInfo={{isAuthUser: sellerId === user!.id, sellerId ,companyName: sellerCompanyProfile.company_name, location: sellerCompanyProfile.company_address, description: sellerCompanyProfile.company_description}} />
           </div>
         </main>
       </div>
+
     </div>
   );
 };

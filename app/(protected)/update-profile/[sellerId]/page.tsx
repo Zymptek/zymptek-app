@@ -113,7 +113,7 @@ const UpdateProfilePage = ({ params }: { params: { sellerId: string } }) => {
   const { user } = useAuth()
 
   useEffect(()=>{
-    if(sellerId !== user!.id){
+    if(sellerId !== user?.id){
       toast({
         variant: "destructive",
         title: "Restricted Access",

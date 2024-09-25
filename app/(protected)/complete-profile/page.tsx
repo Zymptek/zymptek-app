@@ -294,18 +294,6 @@ const ProfileCompletionPage: React.FC = () => {
       return data.publicUrl;
   };
 
-  if (loading) {
-      return (
-          <div className="flex justify-center items-center h-screen">
-              <motion.div
-                  animate={{ x: "calc(10vw - 50%)" }}                
-                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                  className="w-16 h-16 border-t-4 border-blue-500 border-solid rounded-full"
-              />
-          </div>
-      );
-  }
-
     return (
       <div className="container mx-auto p-4 sm:p-6 bg-background-light min-h-screen">
         <motion.div

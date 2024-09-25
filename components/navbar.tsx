@@ -118,7 +118,7 @@ const Navbar = () => {
                   >
                     <MessageSquareText />
                   </motion.button>
-                  <Link href={`/seller/${user!.id}`}>
+                  <Link href={`/profile`}>
                   <motion.button
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.95 }}
