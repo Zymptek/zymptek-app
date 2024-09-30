@@ -7,6 +7,7 @@ import { motion, useAnimation, useInView } from 'framer-motion';
 import Link from 'next/link';
 
 type ProductCardProps = {
+  isSeller: boolean;
   user: Tables<'profiles'>;
 };
 
@@ -49,7 +50,7 @@ const ProductList: React.FC<{ products: any[] }> = ({ products }) => {
   );
 };
 
-const ProductCard: React.FC<ProductCardProps> = ({ user }) => {
+const ProductCard: React.FC<ProductCardProps> = ({ isSeller, user }) => {
   const [products, setProducts] = useState<any[]>([]);
 
   const handleCreateProduct = () => {
@@ -65,7 +66,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ user }) => {
     <Card id='products' className="mb-8 relative">
       <CardHeader>
         <CardTitle className="text-2xl font-bold text-brand-200">Products</CardTitle>
-        {user.user_type === 'SELLER' && (
+        {isSeller && (
           <Link href={`/create-product/${user.user_id}`} passHref>
             <Button
               className="absolute top-4 right-4 btn-primary flex items-center gap-2 transition-transform hover:scale-105"

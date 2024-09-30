@@ -8,5 +8,5 @@ export const updateProductData = async (
   return await supabase
     .from('products')
     .update(updateData)
-    .eq('id', productId);
+    .eq('product_id', productId);
 };

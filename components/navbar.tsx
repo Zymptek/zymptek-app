@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, MessageCircle, User, ChevronDown, Menu, LogOutIcon, LogOut, MessageSquareText } from 'lucide-react';
@@ -9,31 +9,56 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-import { revalidatePath } from 'next/cache';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { Tables }  from '@/lib/database.types'
+
+type Category = Tables<'categories'>;
+type Subcategory = Tables<'subcategories'>;
+
 
 const Navbar = () => {
-
   const { isAuthenticated, user } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
+  const supabase = createClientComponentClient();
 
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [searchType, setSearchType] = useState('products');
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
+  const [isPopoverOpen, setIsPopoverOpen] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
-  const mainCategories = ['Electronics', 'Office Supplies', 'Furniture', 'Industrial', 'Safety'];
-  const allCategories = {
-    'Electronics': ['Computers', 'Phones', 'Accessories'],
-    'Office Supplies': ['Paper', 'Pens', 'Organizers'],
-    'Furniture': ['Desks', 'Chairs', 'Storage'],
-    'Industrial': ['Tools', 'Machinery', 'Raw Materials'],
-    'Safety': ['PPE', 'First Aid', 'Fire Safety'],
-    'Automotive': ['Parts', 'Accessories', 'Fluids'],
-    'Cleaning': ['Janitorial', 'Chemicals', 'Equipment'],
-    'Packaging': ['Boxes', 'Tape', 'Bubble Wrap'],
-    'Hospitality': ['Linens', 'Amenities', 'Food Service'],
-    'Medical': ['Supplies', 'Equipment', 'Pharmaceuticals'],
-  };
+  useEffect(() => {
+    const fetchCategories = async () => {
+      const { data, error } = await supabase
+        .from('categories')
+        .select('*');
+      if (error) {
+        console.error('Error fetching categories:', error);
+      } else {
+        setCategories(data);
+        if (data.length > 0) {
+          setSelectedCategory(data[0].id);
+        }
+      }
+    };
+
+    const fetchSubcategories = async () => {
+      const { data, error } = await supabase
+        .from('subcategories')
+        .select('*');
+      if (error) {
+        console.error('Error fetching subcategories:', error);
+      } else {
+        setSubcategories(data);
+      }
+    };
+
+    fetchCategories();
+    fetchSubcategories();
+  }, []);
 
   const handleSignOut = async () => {
     try {
@@ -227,49 +252,66 @@ const Navbar = () => {
       <div className="bg-gradient-brand text-white py-2 overflow-x-auto">
         <div className="container mx-auto px-4 flex items-center space-x-4">
           {/* Categories Dropdown */}
-          <Popover>
+          <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
             <PopoverTrigger asChild>
               <motion.button
-                className="flex items-center space-x-1 px-3 py-1 rounded-md text-white "
+                className="flex items-center space-x-1 px-3 py-1 rounded-md text-white"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
+                onMouseEnter={() => setIsPopoverOpen(true)}
+                onMouseLeave={() => setIsPopoverOpen(false)}
               >
                 <span>Categories</span>
                 <ChevronDown size={16} />
               </motion.button>
             </PopoverTrigger>
-            <PopoverContent className="w-[90vw] max-w-[600px] p-0">
+            <PopoverContent 
+              className="w-[90vw] max-w-[800px] p-0"
+              onMouseEnter={() => setIsPopoverOpen(true)}
+              onMouseLeave={() => setIsPopoverOpen(false)}
+            >
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="grid grid-cols-2 md:grid-cols-3 gap-2 p-4 bg-white rounded-md shadow-lg"
+                className="flex bg-white shadow-lg"
               >
-                {Object.entries(allCategories).map(([category, subcategories]) => (
-                  <div key={category} className="p-3 hover:bg-gray-100 rounded-md">
-                    <h3 className="font-semibold text-brand-300">{category}</h3>
-                    <ul className="mt-1 space-y-1">
-                      {subcategories.map((sub) => (
-                        <li key={sub} className="text-sm text-gray-600 hover:text-brand-300 cursor-pointer">
-                          {sub}
-                        </li>
+                <div className="w-1/3 border-r border-gray-200 p-1">
+                  {categories.map((category) => (
+                    <div 
+                      key={category.id} 
+                      className={`p-2 cursor-pointer rounded-xl ${selectedCategory === category.id ? 'bg-brand-300 text-white' : 'hover:bg-gray-100'}`}
+                      onMouseEnter={() => setSelectedCategory(category.id)}
+                    >
+                      <h3 className="font-semibold">{category.name}</h3>
+                    </div>
+                  ))}
+                </div>
+                <div className="w-2/3 p-4">
+                  <div className="grid grid-cols-3 gap-4">
+                    {subcategories
+                      .filter((sub) => sub.category_id === selectedCategory)
+                      .map((sub) => (
+                        <div key={sub.id} className="p-2 bg-gray-50 rounded-md hover:bg-gray-100 cursor-pointer">
+                          <div className="text-3xl mb-2">{sub.icon}</div>
+                          <div className="text-sm font-medium text-gray-700">{sub.name}</div>
+                        </div>
                       ))}
-                    </ul>
                   </div>
-                ))}
+                </div>
               </motion.div>
             </PopoverContent>
           </Popover>
 
           {/* Main Categories */}
-          {mainCategories.map((category) => (
+          {categories.slice(0, 5).map((category) => (
             <motion.button
-              key={category}
+              key={category.id}
               className="px-3 py-1 rounded-md text-white"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
-              {category}
+              {category.name}
             </motion.button>
           ))}
         </div>

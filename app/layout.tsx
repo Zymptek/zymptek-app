@@ -6,6 +6,10 @@ import { AuthProvider } from "@/context/AuthContext";
 import { Toaster } from "@/components/ui/toaster";
 import { cookies } from 'next/headers';
 import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
+import { MessageProvider } from "@/context/MessageContext";
+import { usePathname } from "next/navigation";
+import NavbarWrapper from "@/components/navbar";
+import Footer from "@/components/home/Footer";
 
 export const dynamic = 'force-dynamic';
 
@@ -26,11 +30,6 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const supabase = createServerComponentClient({ cookies });
-
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
   
   return (
     <html lang="en" className={inter.className} suppressHydrationWarning>
@@ -42,13 +41,16 @@ export default async function RootLayout({
           disableTransitionOnChange
         >
           <AuthProvider>
-          <Navbar />
-          <main className="min-h-screen flex flex-col items-center">
-              <div className="flex flex-col gap-20 w-full p-5">
-                {children}
-              </div>
-              <Toaster />
-          </main>
+            <MessageProvider>
+              <NavbarWrapper />
+              <main className="min-h-screen flex flex-col items-center">
+                <div className="flex flex-col gap-20 w-full">
+                  {children}
+                </div>
+                <Toaster />
+              </main>
+              <Footer />
+            </MessageProvider>
           </AuthProvider>
         </ThemeProvider>
       </body>

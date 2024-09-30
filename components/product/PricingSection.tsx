@@ -2,7 +2,7 @@ import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 
 interface PricingSectionProps {
-  pricing: Record<string, number>;
+  pricing: { minOrder: number; maxOrder: number; price: number }[];
 }
 
 const PricingSection: React.FC<PricingSectionProps> = ({ pricing }) => {
@@ -15,8 +15,14 @@ const PricingSection: React.FC<PricingSectionProps> = ({ pricing }) => {
         {Object.entries(pricing).map(([range, price]) => (
           <Card key={range} className="bg-gray-50 hover:shadow-md transition-shadow duration-300">
             <CardContent className="p-4">
-              <h4 className="text-lg font-semibold text-brand-200 mb-2">{range}</h4>
-              <p className="text-2xl font-bold">${typeof price === 'number' ? price.toFixed(2) : price}</p>
+              <h4 className="text-lg font-semibold text-brand-200 mb-2">
+                {price.maxOrder ? (
+                  `$${price.minOrder} - $${price.maxOrder}`
+                ) : (
+                  `$${price.minOrder}+`
+                )}
+              </h4>
+              <p className="text-2xl font-bold">${price.price.toFixed(2)}</p>
             </CardContent>
           </Card>
         ))}

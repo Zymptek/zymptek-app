@@ -220,7 +220,7 @@ const SellerProfilePage =  ({ params }: { params: { sellerId: string } }) => {
                 onSubmit={handleSubmit('productionCapacity')}
               />
 
-            <ProductCard user={seller as User} />
+            <ProductCard isSeller={user?.id === sellerId} user={seller as User} />
 
             {/* Add more sections here as needed */}
 
