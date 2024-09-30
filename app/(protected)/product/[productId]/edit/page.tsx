@@ -351,8 +351,8 @@ const ProductEditPage = () => {
                           render={({ field }) => (
                             <>
                               <Input {...field} placeholder="Variation Name" className="mb-2 w-full" />
-                              {errors.variations?.[index]?.name && (
-                                <p className="text-red-500 mt-1">{errors.variations[index].name.message}</p>
+                              {errors?.variations?.[index]?.name && (
+                                <p className="text-red-500 mt-1">{errors.variations?.[index]?.name?.message}</p>
                               )}
                             </>
                           )}
@@ -370,7 +370,7 @@ const ProductEditPage = () => {
                                 onChange={(e) => field.onChange(e.target.value)}
                               />
                               {errors.variations?.[index]?.options && (
-                                <p className="text-red-500 mt-1">{errors.variations[index].options.message}</p>
+                                <p className="text-red-500 mt-1">{errors.variations?.[index]?.options?.message}</p>
                               )}
                             </>
                           )}

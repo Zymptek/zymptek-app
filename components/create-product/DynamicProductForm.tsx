@@ -162,7 +162,7 @@ export const DynamicProductForm = ({ categories, onSubmit }: { categories: Categ
                   render={({ field }) => <Input {...field} type="number" placeholder="Min Order" />}
                 />
                 {errors.pricing?.[index]?.minOrder && (
-                  <p className="text-red-500 mt-1">{errors.pricing[index].minOrder.message}</p>
+                  <p className="text-red-500 mt-1">{errors.pricing?.[index]?.minOrder?.message}</p>
                 )}
               </div>
               <div className="w-full sm:w-1/3">
@@ -172,7 +172,7 @@ export const DynamicProductForm = ({ categories, onSubmit }: { categories: Categ
                   render={({ field }) => <Input {...field} type="number" placeholder="Max Order (optional)" />}
                 />
                 {errors.pricing?.[index]?.maxOrder && (
-                  <p className="text-red-500 mt-1">{errors.pricing[index].maxOrder.message}</p>
+                  <p className="text-red-500 mt-1">{errors.pricing?.[index]?.maxOrder?.message}</p>
                 )}
               </div>
               <div className="w-full sm:w-1/3">
@@ -182,7 +182,7 @@ export const DynamicProductForm = ({ categories, onSubmit }: { categories: Categ
                   render={({ field }) => <Input {...field} type="number" placeholder="Price" />}
                 />
                 {errors.pricing?.[index]?.price && (
-                  <p className="text-red-500 mt-1">{errors.pricing[index].price.message}</p>
+                  <p className="text-red-500 mt-1">{errors.pricing?.[index]?.price?.message}</p>
                 )}
               </div>
               <Button type="button" onClick={() => removePricing(index)} className="bg-red-500 hover:bg-red-600 w-full text-white sm:w-auto">
@@ -214,7 +214,7 @@ export const DynamicProductForm = ({ categories, onSubmit }: { categories: Categ
                   render={({ field }) => <Input {...field} placeholder="Specification Name" />}
                 />
                 {errors.specifications?.[index]?.name && (
-                  <p className="text-red-500 mt-1">{errors.specifications[index].name.message}</p>
+                  <p className="text-red-500 mt-1">{errors.specifications?.[index]?.name?.message}</p>
                 )}
               </div>
               <div className="w-full sm:w-1/2">
@@ -224,7 +224,7 @@ export const DynamicProductForm = ({ categories, onSubmit }: { categories: Categ
                   render={({ field }) => <Input {...field} placeholder="Specification Value" />}
                 />
                 {errors.specifications?.[index]?.value && (
-                  <p className="text-red-500 mt-1">{errors.specifications[index].value.message}</p>
+                  <p className="text-red-500 mt-1">{errors.specifications?.[index]?.value?.message}</p>
                 )}
               </div>
               <Button type="button" onClick={() => removeSpec(index)} className="bg-red-500 hover:bg-red-600 w-full text-white sm:w-auto">
@@ -256,7 +256,7 @@ export const DynamicProductForm = ({ categories, onSubmit }: { categories: Categ
                   <>
                     <Input {...field} placeholder="Variation Name" className="mb-2 w-full" />
                     {errors.variations?.[index]?.name && (
-                      <p className="text-red-500 mt-1">{errors.variations[index].name.message}</p>
+                      <p className="text-red-500 mt-1">{errors.variations?.[index]?.name?.message}</p>
                     )}
                   </>
                 )}
@@ -268,7 +268,7 @@ export const DynamicProductForm = ({ categories, onSubmit }: { categories: Categ
                   <>
                     <Input {...field} placeholder="Options (comma-separated)" className="mb-2 w-full" />
                     {errors.variations?.[index]?.options && (
-                      <p className="text-red-500 mt-1">{errors.variations[index].options.message}</p>
+                      <p className="text-red-500 mt-1">{errors.variations?.[index]?.options?.message}</p>
                     )}
                   </>
                 )}
