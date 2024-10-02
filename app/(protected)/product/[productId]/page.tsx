@@ -1,11 +1,10 @@
 "use client";
 
 import React from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useProductEditor } from '@/hooks/useProductEditor';
 import { Loading } from '@/components/Loading';
-import { Button } from '@/components/ui/button';
 import { Carousel } from 'react-responsive-carousel';
 import AttributeSection from '@/components/product/AttributeSection';
 import PricingSection from '@/components/product/PricingSection';
@@ -18,7 +17,6 @@ import "react-responsive-carousel/lib/styles/carousel.min.css";
 const ProductPage = () => {
   const { user } = useAuth();
   const { productId } = useParams();
-  const router = useRouter();
   const { product, isLoading } = useProductEditor(productId as string);
 
   if (isLoading) {
@@ -86,7 +84,7 @@ const ProductPage = () => {
             productId={product.product_id}
             isOwner={isProductSeller}
           />
-      <SimilarProducts productId={product.product_id} />
+      <SimilarProducts product={product} />
     </div>
   );
 };

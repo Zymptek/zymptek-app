@@ -17,6 +17,7 @@ interface ProductCardProps {
 
 const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const [category, setCategory] = useState<Category | null>(null);
+  const [imageError, setImageError] = useState(false);
   const supabase = createClientComponentClient<Database>();
 
   useEffect(() => {
@@ -37,6 +38,10 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     fetchCategory();
   }, [product.category_id, supabase]);
 
+  const handleImageError = () => {
+    setImageError(true);
+  };
+
   return (
     <motion.div
       whileHover={{ scale: 1.02 }}
@@ -45,13 +50,20 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     >
       <Link href={`/product/${product.product_id}`}>
         <div className="relative h-56 w-full">
-          <Image
-            src="https://via.placeholder.com/400x400"
-            alt={product.headline}
-            layout="fill"
-            objectFit="cover"
-            className="transition-transform duration-300 hover:scale-105"
-          />
+          {!imageError ? (
+            <Image
+              src={product.image_urls[0]}
+              alt={product.headline}
+              layout="fill"
+              objectFit="cover"
+              className="transition-transform duration-300 hover:scale-105"
+              onError={handleImageError}
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-gray-200">
+              <span className="text-gray-400 text-lg">Image not available</span>
+            </div>
+          )}
           {product.sample_available && (
             <span className="absolute top-3 left-3 bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-full">
               Sample Available

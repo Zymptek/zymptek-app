@@ -4,7 +4,7 @@ import { Tables } from '@/lib/database.types';
 import { updateProductData } from '@/lib/product/ProductEditor';
 import { v4 as uuidv4 } from 'uuid';
 
-type Product = Tables<"products"> & {
+export type Product = Tables<"products"> & {
   pricing: { minOrder: number; maxOrder: number; price: number }[];
   variations: { name: string; options: string[] }[];
   specifications: { name: string; value: string }[];

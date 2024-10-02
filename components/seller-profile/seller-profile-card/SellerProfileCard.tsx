@@ -18,9 +18,10 @@ type ProfileSectionProps = {
   fieldConfig: Record<string, FieldProps>;
   schema: z.ZodObject<any>;
   onSubmit: (data: any) => void;
+  icon: React.ReactNode;
 };
 
-export const SellerProfileCards = ({ isAuthUser, title, id, sellerId, data, fieldConfig, schema, onSubmit }: ProfileSectionProps) => {
+export const SellerProfileCards = ({ isAuthUser, title, id, sellerId, data, fieldConfig, schema, onSubmit, icon }: ProfileSectionProps) => {
   const [isEditing, setIsEditing] = useState(false);
 
   const handleEditSubmit = (updatedData: any) => {
@@ -36,7 +37,10 @@ export const SellerProfileCards = ({ isAuthUser, title, id, sellerId, data, fiel
     return (
       <Card className="mb-8 relative" id={id}>
         <CardHeader>
-          <CardTitle className="text-2xl font-bold text-brand-200">{title}</CardTitle>
+          <CardTitle className="text-2xl font-bold text-brand-200 flex items-center">
+            {icon}
+            <span className="ml-2">{title}</span>
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex justify-center items-center h-32">
@@ -72,7 +76,10 @@ export const SellerProfileCards = ({ isAuthUser, title, id, sellerId, data, fiel
   return (
     <Card className="mb-8 relative" id={id}>
       <CardHeader>
-        <CardTitle className="text-2xl font-bold text-brand-200">{title}</CardTitle>
+        <CardTitle className="text-2xl font-bold text-brand-200 flex items-center">
+          {icon}
+          <span className="ml-2">{title}</span>
+        </CardTitle>
         {
               isAuthUser ?
         <button

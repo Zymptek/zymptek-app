@@ -4,7 +4,7 @@ import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import ProductCard from '@/components/home/ProductCard';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Tables } from '@/lib/database.types';
 import { Swiper, SwiperSlide } from 'swiper/react';
@@ -28,46 +28,34 @@ export default function Home() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      const supabase = createClientComponentClient();
-      
-      // Fetch products
-      const { data: products, error: productsError } = await supabase
-        .from('products')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(8);
+  const fetchData = useCallback(async () => {
+    const supabase = createClientComponentClient();
+    
+    try {
+      const [productsResponse, categoriesResponse, subcategoriesResponse] = await Promise.all([
+        supabase
+          .from('products')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(8),
+        supabase
+          .from('categories')
+          .select('*'),
+        supabase
+          .from('subcategories')
+          .select('*')
+      ]);
 
-      if (productsError) {
-        console.error('Error fetching products:', productsError);
-      } else {
-        setFeaturedProducts(products as Product[]);
-      }
+      if (productsResponse.error) throw productsResponse.error;
+      if (categoriesResponse.error) throw categoriesResponse.error;
+      if (subcategoriesResponse.error) throw subcategoriesResponse.error;
 
-      // Fetch categories
-      const { data: categoriesData, error: categoriesError } = await supabase
-        .from('categories')
-        .select('*');
+      setFeaturedProducts(productsResponse.data as Product[]);
+      setCategories(categoriesResponse.data as Category[]);
+      setSubcategories(subcategoriesResponse.data as Subcategory[]);
 
-      if (categoriesError) {
-        console.error('Error fetching categories:', categoriesError);
-      } else {
-        setCategories(categoriesData as Category[]);
-        if (categoriesData.length > 0) {
-          setSelectedCategory(categoriesData[0].id);
-        }
-      }
-
-      // Fetch subcategories
-      const { data: subcategoriesData, error: subcategoriesError } = await supabase
-        .from('subcategories')
-        .select('*');
-
-      if (subcategoriesError) {
-        console.error('Error fetching subcategories:', subcategoriesError);
-      } else {
-        setSubcategories(subcategoriesData as Subcategory[]);
+      if (categoriesResponse.data.length > 0) {
+        setSelectedCategory(categoriesResponse.data[0].id);
       }
 
       // Simulating fetching testimonials from a database
@@ -84,11 +72,16 @@ export default function Home() {
       ];
 
       setTestimonials(mockTestimonials);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    } finally {
       setIsLoading(false);
-    };
-
-    fetchData();
+    }
   }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -100,8 +93,8 @@ export default function Home() {
 
   const banners = [
     { image: '/banner.png', title: 'Connect with Indian Exporters', description: 'Access a wide range of high-quality products' },
-    { image: '/banner.png', title: 'Exclusive B2B Deals', description: 'Save up to 40% on bulk orders' },
-    { image: '/banner.png', title: 'Expand Your Global Reach', description: 'Tap into the potential of Indian markets' },
+    { image: '/banner2.png', title: 'Exclusive B2B Deals', description: 'Save up to 40% on bulk orders' },
+    { image: '/banner3.png', title: 'Expand Your Global Reach', description: 'Tap into the potential of Indian markets' },
   ];
 
   const staggerChildren = {
@@ -135,9 +128,11 @@ export default function Home() {
                   <div className="text-white text-center max-w-2xl px-4">
                     <h2 className="text-5xl font-bold mb-4">{banner.title}</h2>
                     <p className="text-xl mb-8">{banner.description}</p>
+                    <Link href="#categories">
                     <button className="bg-brand-200 text-white px-8 py-3 rounded-full text-lg font-semibold hover:bg-brand-300 transition-colors">
                       Explore Now
                     </button>
+                    </Link>
                   </div>
                 </div>
               </motion.div>
@@ -154,7 +149,7 @@ export default function Home() {
           </div>
         </section>
         
-        <section className="mb-16 mx-10 px-4 py-12 bg-gradient-to-r from-brand-100 to-brand-200 rounded-lg shadow-lg">
+        <section className="mb-16 mx-10 px-4 py-12 bg-gradient-to-r from-brand-100 to-brand-200 rounded-lg shadow-lg" id="categories">
           <h2 className="text-3xl font-bold mb-8 text-white">Explore Categories</h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 mb-8">
             {categories.map((category) => (
