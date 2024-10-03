@@ -13,15 +13,21 @@ type Category = Database['public']['Tables']['categories']['Row'];
 
 interface ProductCardProps {
   product: Product;
+  categoryName?: string;
 }
 
-const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
+const ProductCard: React.FC<ProductCardProps> = ({ product, categoryName }) => {
   const [category, setCategory] = useState<Category | null>(null);
   const [imageError, setImageError] = useState(false);
   const supabase = createClientComponentClient<Database>();
 
   useEffect(() => {
     const fetchCategory = async () => {
+      if (categoryName) {
+        setCategory({ id: product.category_id, name: categoryName } as Category);
+        return;
+      }
+
       const { data, error } = await supabase
         .from('categories')
         .select('*')
@@ -36,7 +42,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     };
 
     fetchCategory();
-  }, [product.category_id, supabase]);
+  }, [product.category_id, categoryName, supabase]);
 
   const handleImageError = () => {
     setImageError(true);
@@ -48,7 +54,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       whileTap={{ scale: 0.98 }}
       className="bg-white rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-xl border border-gray-200"
     >
-      <Link href={`/product/${product.product_id}`}>
+      <Link href={`/products/${product.product_id}`}>
         <div className="relative h-56 w-full">
           {!imageError ? (
             <Image

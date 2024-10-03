@@ -17,7 +17,7 @@ type Subcategory = Tables<'subcategories'>;
 
 
 const Navbar = () => {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
   const supabase = createClientComponentClient();
@@ -29,6 +29,7 @@ const Navbar = () => {
   const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -72,6 +73,28 @@ const Navbar = () => {
     }
   };
 
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchType === 'products') {
+      router.push(`/products?search=${encodeURIComponent(searchTerm)}`);
+    }
+    // Add logic for manufacturer search if needed
+  };
+
+  const handleCategoryClick = (categoryId: string | null) => {
+    if (categoryId) {
+      window.location.href = `/products?category=${categoryId}`;
+      router.refresh();
+    }
+  };
+
+  const handleSubcategoryClick = (categoryId: string | null, subcategoryId: string | null) => {
+    if (categoryId && subcategoryId) {
+      window.location.href = `/products?category=${categoryId}&subcategory=${subcategoryId}`;
+      router.refresh();
+    }
+  };
+
   return (
     <nav className="bg-accent-100 text-text-light">
       {/* Main Navbar */}
@@ -101,34 +124,39 @@ const Navbar = () => {
           {/* Desktop Navigation */}
           <div className="hidden lg:flex items-center space-x-4 flex-grow justify-end">
             {/* Search Bar */}
-            <motion.div
-  className="flex-grow max-w-2xl mx-4 relative"
-  animate={{ width: isSearchFocused ? '60%' : '50%' }}
-  transition={{ duration: 0.3 }}
->
-  <div className="flex">
-    <Select
-      value={searchType}
-      onValueChange={setSearchType}
-    >
-      <SelectTrigger className="w-[140px] rounded-l-xl rounded-r-none bg-white border border-brand-300 text-text-light">
-        <SelectValue className="text-brand-300" />
-      </SelectTrigger>
-      <SelectContent className="bg-white border border-gray-300">
-        <SelectItem value="products" className="text-brand-200">Products</SelectItem>
-        <SelectItem value="manufacturers" className="text-brand-200">Manufacturers</SelectItem>
-      </SelectContent>
-    </Select>
-    <input
-      type="text"
-      placeholder={`Search ${searchType}...`}
-      className="flex-grow py-1 px-2 rounded-r-xl bg-white border border-brand-300 text-brand-300"
-      onFocus={() => setIsSearchFocused(true)}
-      onBlur={() => setIsSearchFocused(false)}
-    />
-  </div>
-  <Search className="absolute right-3 top-2.5 text-brand-300" />
-</motion.div>
+            <motion.form
+              onSubmit={handleSearch}
+              className="flex-grow max-w-2xl mx-4 relative"
+              animate={{ width: isSearchFocused ? '60%' : '50%' }}
+              transition={{ duration: 0.3 }}
+            >
+              <div className="flex">
+                <Select
+                  value={searchType}
+                  onValueChange={setSearchType}
+                >
+                  <SelectTrigger className="w-[140px] rounded-l-xl rounded-r-none bg-white border border-brand-300 text-text-light">
+                    <SelectValue className="text-brand-300" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white border border-gray-300">
+                    <SelectItem value="products" className="text-brand-200">Products</SelectItem>
+                    <SelectItem value="manufacturers" className="text-brand-200">Manufacturers</SelectItem>
+                  </SelectContent>
+                </Select>
+                <input
+                  type="text"
+                  placeholder={`Search ${searchType}...`}
+                  className="flex-grow py-1 px-2 rounded-r-xl bg-white border border-brand-300 text-brand-300"
+                  onFocus={() => setIsSearchFocused(true)}
+                  onBlur={() => setIsSearchFocused(false)}
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+              <button type="submit" className="absolute right-3 top-2.5 text-brand-300">
+                <Search />
+              </button>
+            </motion.form>
 
 
 
@@ -197,7 +225,7 @@ const Navbar = () => {
               className="lg:hidden mt-4"
             >
               {/* Mobile Search Bar */}
-              <div className="flex mb-4">
+              <form onSubmit={handleSearch} className="flex mb-4">
                 <Select
                   value={searchType}
                   onValueChange={setSearchType}
@@ -214,8 +242,13 @@ const Navbar = () => {
                   type="text"
                   placeholder={`Search ${searchType}...`}
                   className="flex-grow py-1 px-4 rounded-r-xl bg-brand-500 border border-gray-300 text-gray-700"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
                 />
-              </div>
+                <button type="submit" className="ml-2 p-2 bg-brand-500 rounded-xl">
+                  <Search />
+                </button>
+              </form>
 
               {/* Mobile Auth Buttons */}
               <div className="flex flex-col space-y-2">
@@ -282,6 +315,7 @@ const Navbar = () => {
                       key={category.id} 
                       className={`p-2 cursor-pointer rounded-xl ${selectedCategory === category.id ? 'bg-brand-300 text-white' : 'hover:bg-gray-100'}`}
                       onMouseEnter={() => setSelectedCategory(category.id)}
+                      onClick={() => handleCategoryClick(category.id)}
                     >
                       <h3 className="font-semibold">{category.name}</h3>
                     </div>
@@ -292,7 +326,11 @@ const Navbar = () => {
                     {subcategories
                       .filter((sub) => sub.category_id === selectedCategory)
                       .map((sub) => (
-                        <div key={sub.id} className="p-2 bg-gray-50 rounded-md hover:bg-gray-100 cursor-pointer">
+                        <div 
+                          key={sub.id} 
+                          className="p-2 bg-gray-50 rounded-md hover:bg-gray-100 cursor-pointer"
+                          onClick={() => handleSubcategoryClick(sub.category_id, sub.id)}
+                        >
                           <div className="text-3xl mb-2">{sub.icon}</div>
                           <div className="text-sm font-medium text-gray-700">{sub.name}</div>
                         </div>
@@ -310,6 +348,7 @@ const Navbar = () => {
               className="px-3 py-1 rounded-md text-white"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
+              onClick={() => handleCategoryClick(category.id)}
             >
               {category.name}
             </motion.button>

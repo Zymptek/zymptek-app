@@ -128,7 +128,7 @@ export default function Home() {
                   <div className="text-white text-center max-w-2xl px-4">
                     <h2 className="text-5xl font-bold mb-4">{banner.title}</h2>
                     <p className="text-xl mb-8">{banner.description}</p>
-                    <Link href="#categories">
+                    <Link href="/products">
                     <button className="bg-brand-200 text-white px-8 py-3 rounded-full text-lg font-semibold hover:bg-brand-300 transition-colors">
                       Explore Now
                     </button>
@@ -173,15 +173,16 @@ export default function Home() {
               {subcategories
                 .filter(subcat => subcat.category_id === selectedCategory)
                 .map((subCategory) => (
-                  <motion.div 
-                    key={subCategory.id}
-                    className="bg-gray-100 p-4 rounded-lg text-center cursor-pointer"
-                    whileHover={{ scale: 1.05 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <span className="text-3xl mb-2 block">{subCategory.icon}</span>
-                    <h4 className="text-sm font-semibold text-brand-200">{subCategory.name}</h4>
-                  </motion.div>
+                  <Link href={`/products?category=${selectedCategory}&subcategory=${subCategory.id}`} key={subCategory.id}>
+                    <motion.div 
+                      className="bg-gray-100 p-4 rounded-lg text-center cursor-pointer"
+                      whileHover={{ scale: 1.05 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <span className="text-3xl mb-2 block">{subCategory.icon}</span>
+                      <h4 className="text-sm font-semibold text-brand-200">{subCategory.name}</h4>
+                    </motion.div>
+                  </Link>
                 ))}
             </div>
           </div>
