@@ -1,14 +1,10 @@
 import { Inter } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import "./globals.css";
-import Navbar from "@/components/navbar";
 import { AuthProvider } from "@/context/AuthContext";
 import { Toaster } from "@/components/ui/toaster";
-import { cookies } from 'next/headers';
-import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
 import { MessageProvider } from "@/context/MessageContext";
-import { usePathname } from "next/navigation";
-import NavbarWrapper from "@/components/navbar";
+import NavbarWrapper from "@/components/home/navbar";
 import Footer from "@/components/home/Footer";
 
 export const dynamic = 'force-dynamic';

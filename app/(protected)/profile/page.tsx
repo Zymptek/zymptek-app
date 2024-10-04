@@ -75,7 +75,7 @@ const ProfilePage = () => {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
-              <Link href={`/seller/${profile.id}`} passHref>
+              <Link href={`/sellers/${profile.id}`} passHref>
                 <Button
                   className="bg-brand-100 hover:bg-brand-600 text-white px-4 py-2 rounded-full font-semibold flex items-center transition-colors duration-300"
                 >

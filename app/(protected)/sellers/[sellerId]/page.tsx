@@ -16,30 +16,9 @@ import { Tables } from '@/lib/database.types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { User, Building, Package, Star, ChevronDown, Calendar, Users, Briefcase, Factory, Truck, Award, Shield, Mail, Phone, Globe, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { SellerData } from '../types';
 
 type User = Tables<'profiles'>
-
-type SellerData = {
-  overview?: {
-    yearEstablished?: Date;
-    totalEmployees?: number;
-    mainProducts?: string;
-    categories?: string[];
-    yearsExporting?: number;
-  };
-  productionCapacity?: {
-    factorySize?: number;
-    productionLines?: number;
-    annualOutput?: number;
-    qualityControlStaff?: number;
-  };
-  company_name: string;
-  company_address: string;
-  company_logo_url: string;
-  company_poster_url: string;
-  company_start_date: string; // Format: YYYY-MM-DD
-  company_description: string;
-};
 
 export type FieldType = 'text' | 'number' | 'textarea' | 'date' | 'select' | 'multiselect';
 
@@ -146,7 +125,7 @@ const SellerProfilePage = ({ params }: { params: { sellerId: string } }) => {
           description: error.message || `There was an issue updating the profile. Please try again.`
         });
       } else {
-        window.location.href=`/seller/${sellerId}`
+        window.location.href=`/sellers/${sellerId}`
       }
     } catch (error) {
       toast({

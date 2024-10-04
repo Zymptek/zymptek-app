@@ -212,7 +212,7 @@ const UpdateProfilePage = ({ params }: { params: { sellerId: string } }) => {
               description: "Your profile has been successfully updated.",
           });
 
-          router.push(`/seller/${sellerId}`);
+          router.push(`/sellers/${sellerId}`);
       } catch (error) {
           console.error('Error submitting profile:', error);
           toast({

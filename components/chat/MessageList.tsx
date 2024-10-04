@@ -31,10 +31,6 @@ const MessageList: React.FC<MessageListProps> = ({ conversationId }) => {
   }, [conversationId, fetchMessages, markAsRead]);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
-
-  useEffect(() => {
     const fetchUserData = async () => {
       if (user) {
         const { data, error } = await supabase
@@ -82,7 +78,7 @@ const MessageList: React.FC<MessageListProps> = ({ conversationId }) => {
   };
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full bg-background-light">
       <div className="flex-grow overflow-y-auto p-4 space-y-4">
         <AnimatePresence>
           {messages.map((message) => (
@@ -98,8 +94,8 @@ const MessageList: React.FC<MessageListProps> = ({ conversationId }) => {
                 <div 
                   className={`px-4 py-2 rounded-lg ${
                     message.sender_id === user!.id 
-                      ? 'bg-gray-500 text-gray-100' 
-                      : 'bg-gray-200 text-gray-800'
+                      ? 'bg-brand-300 text-text-dark' 
+                      : 'bg-accent-100 text-text-light'
                   }`}
                 >
                   {editingMessageId === message.id ? (
@@ -107,10 +103,10 @@ const MessageList: React.FC<MessageListProps> = ({ conversationId }) => {
                       <Input
                         value={editedContent}
                         onChange={(e) => setEditedContent(e.target.value)}
-                        className="mb-2"
+                        className="mb-2 bg-white text-text-light"
                       />
-                      <Button onClick={handleSaveEdit} size="sm">Save</Button>
-                      <Button onClick={() => setEditingMessageId(null)} size="sm" variant="outline" className="ml-2">Cancel</Button>
+                      <Button onClick={handleSaveEdit} size="sm" className="btn-primary">Save</Button>
+                      <Button onClick={() => setEditingMessageId(null)} size="sm" variant="outline" className="ml-2 btn-secondary">Cancel</Button>
                     </div>
                   ) : (
                     <>
@@ -120,10 +116,10 @@ const MessageList: React.FC<MessageListProps> = ({ conversationId }) => {
                       </small>
                       {message.sender_id === user!.id && (
                         <div className="mt-2 flex justify-end space-x-2">
-                          <Button onClick={() => handleEditMessage(message.id)} size="sm" variant="ghost">
+                          <Button onClick={() => handleEditMessage(message.id)} size="sm" variant="ghost" className="text-text-dark hover:bg-hover-bg-light">
                             <Edit size={16} />
                           </Button>
-                          <Button onClick={() => handleDeleteMessage(message.id)} size="sm" variant="ghost">
+                          <Button onClick={() => handleDeleteMessage(message.id)} size="sm" variant="ghost" className="text-text-dark hover:bg-hover-bg-light">
                             <Trash2 size={16} />
                           </Button>
                         </div>
@@ -135,18 +131,17 @@ const MessageList: React.FC<MessageListProps> = ({ conversationId }) => {
             </motion.div>
           ))}
         </AnimatePresence>
-        <div ref={messagesEndRef} />
       </div>
-      <form onSubmit={handleSendMessage} className="p-4 bg-white border-t">
+      <form onSubmit={handleSendMessage} className="p-4 bg-white border-t border-border-light">
         <div className="flex items-center">
           <Input
             type="text"
             placeholder="Type a message..."
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
-            className="flex-grow mr-2"
+            className="flex-grow mr-2 bg-white text-text-light"
           />
-          <Button type="submit" className="bg-brand-500 hover:bg-brand-600">
+          <Button type="submit" className="btn-primary">
             <Send className="h-5 w-5" />
           </Button>
         </div>

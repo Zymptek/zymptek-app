@@ -11,8 +11,8 @@ import PricingSection from '@/components/product/PricingSection';
 import VariationsSection from '@/components/product/VariableSection';
 import SimilarProducts from '@/components/product/SimilarProducts';
 import ActionButtons from '@/components/product/ActionButtons';
-import ProductEditor from '@/components/product/ProductEditor';
 import "react-responsive-carousel/lib/styles/carousel.min.css";
+import ReactMarkdown from 'react-markdown';
 
 const ProductPage = () => {
   const { user } = useAuth();
@@ -35,7 +35,7 @@ const ProductPage = () => {
         <h1 className='text-2xl font-bold text-brand-300 mb-6'>{product.headline}</h1>
       
         <div className='grid grid-cols-1 lg:grid-cols-2 gap-8'>
-        <div>
+          <div>
             <Carousel 
               useKeyboardArrows={true} 
               showStatus={false} 
@@ -50,12 +50,12 @@ const ProductPage = () => {
                 ))
               }
             >
-            {product.image_urls.map((url, index) => (
-              <div key={index} className="w-full h-[500px]">
-                <img src={url} alt={`Product image ${index + 1}`} className="object-contain w-full h-full rounded-lg" />
-              </div>
-            ))}
-          </Carousel>
+              {product.image_urls.map((url, index) => (
+                <div key={index} className="w-full h-[500px]">
+                  <img src={url} alt={`Product image ${index + 1}`} className="object-contain w-full h-full rounded-lg" />
+                </div>
+              ))}
+            </Carousel>
 
             <div className="space-y-6">
               <AttributeSection
@@ -67,7 +67,7 @@ const ProductPage = () => {
                 attributes={product.packaging || []}
               />
             </div>
-        </div>
+          </div>
 
           <div className="lg:sticky lg:top-4 lg:self-start">
             <div className="bg-white rounded-lg p-6 shadow-md space-y-8">
@@ -77,13 +77,15 @@ const ProductPage = () => {
             </div>
           </div>
         </div>
+
+        <div className="mt-12 bg-white rounded-lg p-6 shadow-md">
+          <h2 className="text-xl font-semibold text-brand-300 mb-4">Product Description</h2>
+          <div className="prose max-w-none">
+            <ReactMarkdown>{product.description || ''}</ReactMarkdown>
+          </div>
+        </div>
       </div>
 
-      <ProductEditor
-            initialValue={product.description || ''}
-            productId={product.product_id}
-            isOwner={isProductSeller}
-          />
       <SimilarProducts product={product} />
     </div>
   );

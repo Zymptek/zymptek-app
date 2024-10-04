@@ -11,6 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { Tables }  from '@/lib/database.types'
+import { useMessage } from '@/context/MessageContext';
 
 type Category = Tables<'categories'>;
 type Subcategory = Tables<'subcategories'>;
@@ -20,6 +21,7 @@ const Navbar = () => {
   const { isAuthenticated } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
+  const { totalUnreadCount } = useMessage();
   const supabase = createClientComponentClient();
 
   const [isSearchFocused, setIsSearchFocused] = useState(false);
@@ -77,8 +79,9 @@ const Navbar = () => {
     e.preventDefault();
     if (searchType === 'products') {
       router.push(`/products?search=${encodeURIComponent(searchTerm)}`);
+    } else if (searchType === 'manufacturers') {
+      router.push(`/sellers?search=${encodeURIComponent(searchTerm)}`);
     }
-    // Add logic for manufacturer search if needed
   };
 
   const handleCategoryClick = (categoryId: string | null) => {
@@ -164,13 +167,20 @@ const Navbar = () => {
             <div className="flex items-center space-x-4">
               {isAuthenticated ? (
                 <>
+                <Link href={`/messages`}>
                   <motion.button
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.95 }}
-                    className="p-2 rounded-full hover:bg-hover-bg-light"
+                    className="p-2 rounded-full hover:bg-hover-bg-light relative"
                   >
                     <MessageSquareText />
+                    {totalUnreadCount > 0 && (
+                      <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                        {totalUnreadCount}
+                      </span>
+                    )}
                   </motion.button>
+                </Link>
                   <Link href={`/profile`}>
                   <motion.button
                     whileHover={{ scale: 1.1 }}

@@ -6,7 +6,7 @@ import { EditDialog } from '../EditableDialog';
 import { z } from 'zod';
 import { Edit, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { FieldProps } from '@/app/(protected)/seller/[sellerId]/page';
+import { FieldProps } from '@/app/(protected)/sellers/[sellerId]/page';
 import { useAuth } from '@/context/AuthContext';
 
 type ProfileSectionProps = {
@@ -28,6 +28,8 @@ export const SellerProfileCards = ({ isAuthUser, title, id, sellerId, data, fiel
     onSubmit(updatedData);
     setIsEditing(false);
   };
+
+  console.log(fieldConfig, data)
 
   const handleAddSection = () => {
     setIsEditing(true);
