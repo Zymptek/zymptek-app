@@ -73,7 +73,7 @@ const ProductPage = () => {
             <div className="bg-white rounded-lg p-6 shadow-md space-y-8">
               <PricingSection pricing={product.pricing || {}} />
               <VariationsSection variations={product.variations || []} />
-              <ActionButtons isProductSeller={isProductSeller} productId={product.product_id} sellerId={product.seller_id} />
+              <ActionButtons isProductSeller={isProductSeller} product={product} sellerId={product.seller_id} />
             </div>
           </div>
         </div>

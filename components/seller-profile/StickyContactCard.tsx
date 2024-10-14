@@ -2,7 +2,6 @@ import { Send } from 'lucide-react'; // Importing the Send icon from lucide-reac
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
-import MessageModal from '@/components/chat/MessageModal';
 
 type SupplierInfo = {
   isAuthUser: boolean;
@@ -39,20 +38,8 @@ const StickyContactCard = ({ supplierInfo }: { supplierInfo: SupplierInfo }) => 
                 </Button>
               </Link>
         :
-        <Button 
-  className="flex items-center px-4 py-2 rounded-full btn-primary text-white transition-transform hover:scale-105 duration-300 w-full"
-  onClick={() => setIsMessageModalOpen(true)}
->
-  <Send className="mr-2" />
-  Send Inquiry
-</Button>
-      }
-      <MessageModal
-  isOpen={isMessageModalOpen}
-  onClose={() => setIsMessageModalOpen(false)}
-        sellerId={supplierInfo.sellerId}
-      />
-     
+        <></>
+      }   
     </div>
   );
 };

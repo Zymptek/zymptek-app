@@ -3,11 +3,14 @@
 import React, { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { User } from '@supabase/supabase-js';
-import { Database } from '@/lib/database.types';
+import { Database, Tables } from '@/lib/database.types';
 import { useRouter } from 'next/navigation';
+
+export type Profile = Tables<'profiles'>;
 
 interface AuthContextType {
   user: User | null;
+  profile: Profile | null;
   isAuthenticated: boolean;
   loading: boolean;
 }
@@ -20,6 +23,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [loading, setLoading] = useState(true);
   const supabase = createClientComponentClient<Database>()
@@ -36,6 +40,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const { data: authListener } = supabase.auth.onAuthStateChange((_, session) => {
 
       const currentUser = session?.user || null;
+
+      if (currentUser) {
+        supabase.from('profiles').select('*').eq('user_id', currentUser.id).single().then(({ data }) => {
+          setProfile(data);
+        });
+      }
+
       setUser(currentUser);
       setIsAuthenticated(!!currentUser);
       setLoading(false);
@@ -47,7 +58,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, [ supabase, router]);
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated, loading }}>
+    <AuthContext.Provider value={{ user, profile, isAuthenticated, loading }}>
       {children}
     </AuthContext.Provider>
   );

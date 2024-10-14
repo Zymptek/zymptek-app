@@ -3,7 +3,6 @@ import { ThemeProvider } from "next-themes";
 import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
 import { Toaster } from "@/components/ui/toaster";
-import { MessageProvider } from "@/context/MessageContext";
 import NavbarWrapper from "@/components/home/navbar";
 import Footer from "@/components/home/Footer";
 
@@ -36,8 +35,7 @@ export default async function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <AuthProvider>
-            <MessageProvider>
+          <AuthProvider>        
               <NavbarWrapper />
               <main className="min-h-screen flex flex-col items-center">
                 <div className="flex flex-col gap-20 w-full">
@@ -46,7 +44,6 @@ export default async function RootLayout({
                 <Toaster />
               </main>
               <Footer />
-            </MessageProvider>
           </AuthProvider>
         </ThemeProvider>
       </body>

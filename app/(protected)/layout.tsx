@@ -1,25 +1,26 @@
 // app/(protected)/layout.tsx
 'use client';
 
-import { Suspense, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import { Loading } from '../../components/Loading';
 
+
 export default function ProtectedLayout({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useAuth();
+  const { user, loading, profile } = useAuth();
   const [isLoading, setIsLoading] = useState(true)
   const router = useRouter();
 
   useEffect(() => {
-    if (!loading && !user) {
+    if (!loading && !user && !profile) {
       router.push('/sign-in');
     }
 
     setIsLoading(false)
   }, [user, loading, router]);
 
-  if(isLoading){
+  if(loading || isLoading) {
     return <Loading/>
   }
 

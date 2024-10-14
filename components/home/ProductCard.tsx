@@ -4,16 +4,12 @@ import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Database } from '@/lib/database.types';
+import { Database, Json, Tables } from '@/lib/database.types';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { Tag, Truck, Pencil, MoreHorizontal } from 'lucide-react';
 
-type Product = Database['public']['Tables']['products']['Row'] & {
-  shipping_info: {
-    leadTime: string;
-  };
-};
-type Category = Database['public']['Tables']['categories']['Row'];
+type Category = Tables<'categories'>;
+type Product = Tables<'products'>;
 
 interface ProductCardProps {
   product: Product;
@@ -113,12 +109,6 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, categoryName }) => {
             {product.customization && (
               <span className="bg-gray-100 px-1 sm:px-2 py-1 rounded-full flex items-center whitespace-nowrap">
                 <Pencil className="mr-1 w-2 h-2 sm:w-3 sm:h-3 flex-shrink-0" /> Customizable
-              </span>
-            )}
-            {product.shipping_info && (
-              <span className="bg-gray-100 px-1 sm:px-2 py-1 rounded-full flex items-center whitespace-nowrap overflow-hidden text-ellipsis max-w-[calc(100%-8px)]">
-                <Truck className="mr-1 w-2 h-2 sm:w-3 sm:h-3 flex-shrink-0" />
-                <span className="truncate">{product.shipping_info.leadTime}</span>
               </span>
             )}
           </div>

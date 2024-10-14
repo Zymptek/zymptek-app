@@ -14,7 +14,7 @@ type SortOption = 'price_asc' | 'price_desc';
 
 const ITEMS_PER_PAGE = 12;
 
-type Product = Database['public']['Functions']['get_products']['Returns'][number]
+type Product = Database['public']['Functions']['get_products']['Returns'][number];
 
 export default function ProductsPage() {
   const router = useRouter();
