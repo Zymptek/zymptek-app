@@ -150,8 +150,6 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [supabase, updateLastRead]);
 
-
-
   const deleteMessage = useCallback(async (messageId: string) => {
     try {
       const { error } = await supabase
@@ -298,7 +296,6 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [user, supabase, loadConversations]);
 
-  
   const markMessageAsDelivered = useCallback(async (messageId: string) => {
     try {
       const { error } = await supabase
@@ -337,7 +334,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
             if ('sender_id' in payload.new && payload.new.sender_id !== user?.id) { // Check if sender_id exists and is not from the current user
               if ('id' in payload.new && payload.new.id) { // Check if id exists before using it
                 // Mark the message as delivered if it's not from the current user
-                await markMessageAsDelivered(payload.new.id);
+                await updateMessageStatus(payload.new.id, 'delivered');
               }
             }
             await loadMessages(payload.new.conversation_id);
@@ -392,16 +389,21 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const updateMessageStatus = useCallback(async (messageId: string, status: 'delivered' | 'read') => {
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('messages')
         .update({ status })
-        .eq('id', messageId);
-
+        .eq('id', messageId)
+        .select();
+      
       if (error) throw error;
 
-      setMessages(prev => prev.map(msg => 
-        msg.id === messageId ? { ...msg, status } : msg
-      ));
+      if (data && data.length > 0) {
+        setMessages(prev => prev.map(msg => 
+          msg.id === messageId ? { ...msg, status } : msg
+        ));
+      } else {
+        console.warn(`No message found with id ${messageId}`);
+      }
     } catch (error) {
       console.error('Error updating message status:', error);
     }

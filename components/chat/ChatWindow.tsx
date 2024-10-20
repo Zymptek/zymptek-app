@@ -95,19 +95,22 @@ const ChatWindow: React.FC = () => {
   const renderMessageStatus = useCallback((status: string) => {
     switch (status) {
       case 'sent':
-        return <Check className="w-4 h-4 text-gray-400" />;
+        return <Check className="w-4 h-4 text-text-dark" />;
       case 'delivered':
-        return <CheckCheck className="w-4 h-4 text-gray-400" />;
+        return <CheckCheck className="w-4 h-4 text-text-dark" />;
       case 'read':
-        return <CheckCheck className="w-4 h-4 text-blue-500" />;
+        return <CheckCheck className="w-4 h-4 text-text-dark" />;
       default:
         return null;
     }
   }, []);
 
   useEffect(() => {
-    if (currentConversation && messages.length > 0) {
-      const unreadMessages = messages.filter(m => m.sender_id !== currentUser?.id && m.status !== 'read');
+    if (currentConversation && messages.length > 0 && currentUser) {
+      const unreadMessages = messages.filter(m => 
+        m.sender_id !== currentUser.id && 
+        (m.status === 'sent' || m.status === 'delivered')
+      );
       unreadMessages.forEach(message => {
         updateMessageStatus(message.id, 'read');
       });
