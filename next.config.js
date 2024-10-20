@@ -27,6 +27,14 @@ const nextConfig = {
                 hostname: 'images.unsplash.com',
                 protocol: 'https',
             },
+            {
+                hostname: 'avatars.githubusercontent.com',
+                protocol: 'https',
+            },
+            {
+                hostname: 'lh3.googleusercontent.com',
+                protocol: 'https',
+            },
         ], // Add your Supabase storage domain here
     }
 };
