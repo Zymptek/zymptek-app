@@ -11,8 +11,10 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Send, Paperclip, MoreVertical, Trash2, Check, CheckCheck } from "lucide-react"
 import { useChat } from '@/context/ChatContext'
 import { useAuth } from '@/context/AuthContext'
-import FileUpload from './FileUpload'
-import { ChatMessage, Conversation, Profile } from '@/types/chats/types'
+import FileUpload from '@/components/chat/FileUpload'
+import { ChatMessage } from '@/types/chats/types'
+import Image from 'next/image'
+import { useToast } from "@/hooks/use-toast"
 
 const ChatWindow: React.FC = () => {
   const { currentConversation, messages, sendMessage, deleteMessage, updateLastRead, setIsTyping, typingUsers, userProfiles, draftMessages, saveDraftMessage, clearDraftMessage, loadMessages, updateMessageStatus } = useChat()
@@ -21,6 +23,8 @@ const ChatWindow: React.FC = () => {
   const [file, setFile] = useState<File | null>(null)
   const scrollAreaRef = useRef<HTMLDivElement>(null)
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const [imagePreview, setImagePreview] = useState<string | null>(null)
+  const { toast } = useToast()
 
   useEffect(() => {
     if (currentConversation) {
@@ -37,6 +41,30 @@ const ChatWindow: React.FC = () => {
       updateLastRead(currentConversation.id)
     }
   }, [messages, currentConversation, updateLastRead])
+
+  useEffect(() => {
+    if (file && file.type.startsWith('image/')) {
+      const objectUrl = URL.createObjectURL(file)
+      setImagePreview(objectUrl)
+
+      // Free memory when this component unmounts
+      return () => URL.revokeObjectURL(objectUrl)
+    } else {
+      setImagePreview(null)
+    }
+  }, [file])
+
+  const handleFileSelect = useCallback((selectedFile: File | null) => {
+    if (selectedFile && !selectedFile.type.startsWith('image/')) {
+      toast({
+        title: "Invalid file type",
+        description: "Please select an image file.",
+        variant: "destructive",
+      })
+      return
+    }
+    setFile(selectedFile)
+  }, [toast])
 
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const message = e.target.value
@@ -58,16 +86,25 @@ const ChatWindow: React.FC = () => {
   const handleSendMessage = useCallback(async (e: React.FormEvent) => {
     e.preventDefault()
     if (currentConversation && (newMessage.trim() || file)) {
-      await sendMessage(newMessage, file || undefined)
-      setNewMessage('')
-      setFile(null)
-      clearDraftMessage(currentConversation.id)
-      setIsTyping(currentConversation.id, false)
-      if (typingTimeoutRef.current) {
-        clearTimeout(typingTimeoutRef.current)
+      try {
+        await sendMessage(newMessage, file || undefined)
+        setNewMessage('')
+        setFile(null)
+        setImagePreview(null)
+        clearDraftMessage(currentConversation.id)
+        setIsTyping(currentConversation.id, false)
+        if (typingTimeoutRef.current) {
+          clearTimeout(typingTimeoutRef.current)
+        }
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to send message. Please try again.",
+          variant: "destructive",
+        })
       }
     }
-  }, [currentConversation, newMessage, file, sendMessage, clearDraftMessage, setIsTyping])
+  }, [currentConversation, newMessage, file, sendMessage, clearDraftMessage, setIsTyping, toast])
 
   const getTypingIndicator = useCallback(() => {
     if (!currentConversation || !typingUsers[currentConversation.id]) return null;
@@ -144,7 +181,7 @@ const ChatWindow: React.FC = () => {
   if (!currentConversation) {
     return <div className="flex items-center justify-center h-full">Select a conversation to start chatting</div>
   }
-
+  console.log(imagePreview)
   const otherUser = currentConversation.buyer_id === currentUser?.id ? currentConversation.seller : currentConversation.buyer
 
   return (
@@ -218,8 +255,31 @@ const ChatWindow: React.FC = () => {
         )}
       </ScrollArea>
       <form onSubmit={handleSendMessage} className="p-4 border-t bg-background-light">
+        {imagePreview && (
+          <div className="mb-2 relative">
+            <Image
+              src={imagePreview}
+              alt="Image preview"
+              width={200}
+              height={200}
+              className="rounded-lg object-cover"
+            />
+            <Button
+              type="button"
+              size="sm"
+              variant="secondary"
+              className="absolute top-1 right-1"
+              onClick={() => {
+                setFile(null)
+                setImagePreview(null)
+              }}
+            >
+              Remove
+            </Button>
+          </div>
+        )}
         <div className="flex items-center space-x-2">
-          <FileUpload onFileSelect={setFile} />
+          <FileUpload onFileSelect={handleFileSelect} />
           <Input
             type="text"
             value={newMessage}
@@ -227,7 +287,7 @@ const ChatWindow: React.FC = () => {
             placeholder="Type a message..."
             className="flex-grow bg-white"
           />
-          {file && (
+          {file && !imagePreview && (
             <div className="flex items-center space-x-2">
               <span className="text-sm text-gray-500">{file.name}</span>
               <Button type="button" size="sm" variant="ghost" onClick={() => setFile(null)}>
