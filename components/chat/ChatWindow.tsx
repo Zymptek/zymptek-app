@@ -8,23 +8,44 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
-import { Send, Paperclip, MoreVertical, Trash2, Check, CheckCheck } from "lucide-react"
+import { Send, MoreVertical, Trash2, Check, CheckCheck, ArrowLeft } from "lucide-react"
 import { useChat } from '@/context/ChatContext'
 import { useAuth } from '@/context/AuthContext'
 import FileUpload from '@/components/chat/FileUpload'
-import { ChatMessage } from '@/types/chats/types'
-import Image from 'next/image'
+import ChatMessage from '@/components/chat/ChatMessage'
 import { useToast } from "@/hooks/use-toast"
 
 const ChatWindow: React.FC = () => {
-  const { currentConversation, messages, sendMessage, deleteMessage, updateLastRead, setIsTyping, typingUsers, userProfiles, draftMessages, saveDraftMessage, clearDraftMessage, loadMessages, updateMessageStatus } = useChat()
+  const { 
+    currentConversation, 
+    messages, 
+    sendMessage, 
+    deleteMessage, 
+    updateLastRead, 
+    setIsTyping, 
+    typingUsers, 
+    userProfiles, 
+    draftMessages, 
+    saveDraftMessage, 
+    clearDraftMessage, 
+    loadMessages, 
+    updateMessageStatus,
+    setCurrentConversation
+  } = useChat()
   const { user: currentUser } = useAuth()
   const [newMessage, setNewMessage] = useState('')
   const [file, setFile] = useState<File | null>(null)
   const scrollAreaRef = useRef<HTMLDivElement>(null)
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
-  const [imagePreview, setImagePreview] = useState<string | null>(null)
   const { toast } = useToast()
+  const [isMobile, setIsMobile] = useState(false)
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768)
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
 
   useEffect(() => {
     if (currentConversation) {
@@ -41,30 +62,6 @@ const ChatWindow: React.FC = () => {
       updateLastRead(currentConversation.id)
     }
   }, [messages, currentConversation, updateLastRead])
-
-  useEffect(() => {
-    if (file && file.type.startsWith('image/')) {
-      const objectUrl = URL.createObjectURL(file)
-      setImagePreview(objectUrl)
-
-      // Free memory when this component unmounts
-      return () => URL.revokeObjectURL(objectUrl)
-    } else {
-      setImagePreview(null)
-    }
-  }, [file])
-
-  const handleFileSelect = useCallback((selectedFile: File | null) => {
-    if (selectedFile && !selectedFile.type.startsWith('image/')) {
-      toast({
-        title: "Invalid file type",
-        description: "Please select an image file.",
-        variant: "destructive",
-      })
-      return
-    }
-    setFile(selectedFile)
-  }, [toast])
 
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const message = e.target.value
@@ -90,7 +87,6 @@ const ChatWindow: React.FC = () => {
         await sendMessage(newMessage, file || undefined)
         setNewMessage('')
         setFile(null)
-        setImagePreview(null)
         clearDraftMessage(currentConversation.id)
         setIsTyping(currentConversation.id, false)
         if (typingTimeoutRef.current) {
@@ -154,39 +150,29 @@ const ChatWindow: React.FC = () => {
     }
   }, [currentConversation, messages, currentUser, updateMessageStatus]);
 
-  const renderMessage = useCallback((message: ChatMessage) => {
-    switch (message.type) {
-      case 'image':
-        return (
-          <div className="relative">
-            <img src={message.file_url || ''} alt="Shared image" className="max-w-full rounded" />
-            {message.content && <p className="mt-2">{message.content}</p>}
-          </div>
-        )
-      case 'document':
-        return (
-          <div>
-            <a href={message.file_url || ''} target="_blank" rel="noopener noreferrer" className="flex items-center space-x-2 text-blue-500 hover:underline">
-              <Paperclip className="w-4 h-4" />
-              <span>Attached document</span>
-            </a>
-            {message.content && <p className="mt-2">{message.content}</p>}
-          </div>
-        )
-      default:
-        return <p>{message.content}</p>
-    }
-  }, [])
-
   if (!currentConversation) {
-    return <div className="flex items-center justify-center h-full">Select a conversation to start chatting</div>
+    return (
+      <div className="flex items-center justify-center h-full bg-background-light text-brand-300">
+        Select a conversation to start chatting
+      </div>
+    )
   }
-  console.log(imagePreview)
+
   const otherUser = currentConversation.buyer_id === currentUser?.id ? currentConversation.seller : currentConversation.buyer
 
   return (
     <div className="flex flex-col h-full bg-background shadow-xl rounded-lg overflow-hidden">
       <div className="p-4 border-b flex items-center justify-between bg-background text-black">
+        {isMobile && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="mr-2"
+            onClick={() => setCurrentConversation(null)}
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+        )}
         <div className="flex items-center space-x-4">
           <Avatar className="h-10 w-10 border-2 border-brand-500">
             <AvatarImage src={otherUser?.avatar_url || ''} alt={`${otherUser?.first_name || ''} ${otherUser?.last_name || ''}`} />
@@ -212,7 +198,7 @@ const ChatWindow: React.FC = () => {
               className={`mb-4 flex ${message.sender_id === currentUser?.id ? 'justify-end' : 'justify-start'}`}
             >
               <div className={`max-w-[70%] ${message.sender_id === currentUser?.id ? 'bg-brand-300 text-white' : 'bg-accent-100 text-gray-800'} rounded-lg p-3 relative group`}>
-                {renderMessage(message)}
+                <ChatMessage message={message} />
                 <div className="flex justify-between items-center mt-1">
                   <p className="text-xs opacity-70">
                     {format(new Date(message.created_at || ''), 'HH:mm')}
@@ -255,31 +241,8 @@ const ChatWindow: React.FC = () => {
         )}
       </ScrollArea>
       <form onSubmit={handleSendMessage} className="p-4 border-t bg-background-light">
-        {imagePreview && (
-          <div className="mb-2 relative">
-            <Image
-              src={imagePreview}
-              alt="Image preview"
-              width={200}
-              height={200}
-              className="rounded-lg object-cover"
-            />
-            <Button
-              type="button"
-              size="sm"
-              variant="secondary"
-              className="absolute top-1 right-1"
-              onClick={() => {
-                setFile(null)
-                setImagePreview(null)
-              }}
-            >
-              Remove
-            </Button>
-          </div>
-        )}
         <div className="flex items-center space-x-2">
-          <FileUpload onFileSelect={handleFileSelect} />
+          <FileUpload onFileSelect={setFile} />
           <Input
             type="text"
             value={newMessage}
@@ -287,7 +250,7 @@ const ChatWindow: React.FC = () => {
             placeholder="Type a message..."
             className="flex-grow bg-white"
           />
-          {file && !imagePreview && (
+          {file && (
             <div className="flex items-center space-x-2">
               <span className="text-sm text-gray-500">{file.name}</span>
               <Button type="button" size="sm" variant="ghost" onClick={() => setFile(null)}>

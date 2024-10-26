@@ -5,6 +5,7 @@ import { ChatListItem, ChatMessage, Conversation, Profile, TypingUsers } from '@
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { useAuth } from '@/context/AuthContext'
 import { RealtimePostgresChangesPayload } from '@supabase/supabase-js'
+import { useToast } from '@/hooks/use-toast'
 
 interface ChatContextType {
   conversations: ChatListItem[]
@@ -38,6 +39,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [draftMessages, setDraftMessages] = useState<Record<string, string>>({})
   const { user } = useAuth()
   const subscriptionsRef = useRef<(() => void)[]>([])
+  const { toast } = useToast()
 
   useEffect(() => {
     if (user) {
@@ -173,13 +175,26 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
       let fileType = null;
 
       if (file) {
-        const { data, error } = await supabase.storage
+        const filePath = `${currentConversation.id}/${Date.now()}-${file.name}`;
+        
+        // Get a signed URL for uploading
+        const { data: uploadData, error: uploadError } = await supabase.storage
           .from('chat-attachments')
-          .upload(`${currentConversation.id}/${Date.now()}-${file.name}`, file);
+          .createSignedUploadUrl(filePath);
 
-        if (error) throw error;
+        if (uploadError) throw uploadError;
 
-        fileUrl = supabase.storage.from('chat-attachments').getPublicUrl(data.path).data.publicUrl;
+        // Upload the file using the signed URL
+        const uploadResult = await fetch(uploadData.signedUrl, {
+          method: 'PUT',
+          body: file,
+          headers: { 'Content-Type': file.type }
+        });
+
+        if (!uploadResult.ok) throw new Error('Failed to upload file');
+
+        // Store the path, not the signed URL
+        fileUrl = filePath;
         fileType = file.type.startsWith('image/') ? 'image' : 'document';
       }
 
@@ -204,6 +219,11 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
       updateLastRead(currentConversation.id);
     } catch (error) {
       console.error('Error sending message:', error);
+      toast({
+        title: "Error",
+        description: "Failed to send message. Please try again.",
+        variant: "destructive",
+      });
     }
   }, [currentConversation, user, supabase, updateLastRead]);
 
