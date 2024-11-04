@@ -13,7 +13,7 @@ import {
 import { Product } from '@/hooks/useProductEditor';
 import { Send } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
-import {  useAuth } from '@/context/AuthContext';
+import { useChat } from '@/context/ChatContext';
 
 interface ModalState {
     isOpen: boolean;
@@ -45,9 +45,19 @@ const useModal = (): UseModalReturn => {
 const B2BInquiryModal: React.FC<ModalState & { closeModal: () => void; }> = ({ isOpen, closeModal, product }) => {
     const [inquiry, setInquiry] = useState('');
     const { toast } = useToast();
-    const { profile } = useAuth();
+    const { startNewConversation } = useChat();
 
     const handleSubmit = async () => {
+        if (!product) return;
+
+        try {
+            const messageContent = inquiry; // Use the content from the textarea
+            await startNewConversation(product.seller_id, messageContent, product.product_id); // Function to send the message
+            toast({ title: "Inquiry Sent", description: "Your inquiry has been sent to the seller.", variant: "success" });
+            closeModal();
+        } catch (error) {
+            toast({ title: "Error", description: "There was an issue sending your inquiry. Please try again.", variant: "destructive" });
+        }
     };
 
     return (

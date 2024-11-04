@@ -5,6 +5,7 @@ import { AuthProvider } from "@/context/AuthContext";
 import { Toaster } from "@/components/ui/toaster";
 import NavbarWrapper from "@/components/home/navbar";
 import Footer from "@/components/home/Footer";
+import { ChatProvider } from "@/context/ChatContext";
 
 export const dynamic = 'force-dynamic';
 
@@ -36,6 +37,7 @@ export default async function RootLayout({
           disableTransitionOnChange
         >
           <AuthProvider>        
+            <ChatProvider>
               <NavbarWrapper />
               <main className="min-h-screen flex flex-col items-center">
                 <div className="flex flex-col gap-20 w-full">
@@ -44,6 +46,7 @@ export default async function RootLayout({
                 <Toaster />
               </main>
               <Footer />
+            </ChatProvider>
           </AuthProvider>
         </ThemeProvider>
       </body>
