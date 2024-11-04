@@ -34,6 +34,14 @@
 
     /* Gradient */
     --brand-gradient: linear-gradient(90deg, var(--brand-200), var(--brand-300));
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
   }
   
   .dark {
@@ -41,6 +49,14 @@
     --text-light: var(--text-dark);
     --border-light: var(--border-dark);
     --hover-bg-light: var(--hover-bg-dark);
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
   .btn {
@@ -78,6 +94,18 @@
   .btn-outline {
     @apply text-brand-200 border border-brand-200;
     background-color: transparent;
+  }
+  
+}
+
+@layer base {
+  * {
+    @apply border-border-light;
+  
+  }
+  body {
+    @apply bg-background-light text-text-light;
+  
   }
   
 }

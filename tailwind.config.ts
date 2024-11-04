@@ -23,7 +23,7 @@ const config = {
   			},
   			background: {
   				light: 'var(--background-light)',
-  				dark: 'var(--background-dark)'	
+  				dark: 'var(--background-dark)'
   			},
   			text: {
   				light: 'var(--text-light)',
@@ -36,6 +36,16 @@ const config = {
   			hoverBg: {
   				light: 'var(--hover-bg-light)',
   				dark: 'var(--hover-bg-dark)'
+  			},
+  			sidebar: {
+  				DEFAULT: 'hsl(var(--sidebar-background))',
+  				foreground: 'hsl(var(--sidebar-foreground))',
+  				primary: 'hsl(var(--sidebar-primary))',
+  				'primary-foreground': 'hsl(var(--sidebar-primary-foreground))',
+  				accent: 'hsl(var(--sidebar-accent))',
+  				'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
+  				border: 'hsl(var(--sidebar-border))',
+  				ring: 'hsl(var(--sidebar-ring))'
   			}
   		},
   		fontFamily: {
@@ -46,10 +56,10 @@ const config = {
   		borderRadius: {
   			lg: '8px'
   		},
-		backgroundImage: {
-			'gradient-brand': 'linear-gradient(90deg, var(--brand-200), var(--brand-300))',
-			'gradient-accent': 'linear-gradient(90deg, var(--brand-400), var(--brand-500))'
-		},
+  		backgroundImage: {
+  			'gradient-brand': 'linear-gradient(90deg, var(--brand-200), var(--brand-300))',
+  			'gradient-accent': 'linear-gradient(90deg, var(--brand-400), var(--brand-500))'
+  		},
   		keyframes: {
   			'accordion-down': {
   				from: {
