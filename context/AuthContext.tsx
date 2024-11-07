@@ -6,7 +6,9 @@ import { User } from '@supabase/supabase-js';
 import { Database, Tables } from '@/lib/database.types';
 import { useRouter } from 'next/navigation';
 
-export type Profile = Tables<'profiles'>;
+export type Profile = Tables<'profiles'> & {
+  company_profile: any;
+};
 
 interface AuthContextType {
   user: User | null;

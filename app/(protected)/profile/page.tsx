@@ -1,70 +1,291 @@
 "use client";
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { Bell, Home, LayoutDashboard, MessageSquare, Package, Settings, ShoppingCart, Users, DollarSign, Link, User2, Plus, PieChart } from 'lucide-react';
+import { useState } from 'react';
+import { LayoutDashboard, Star, Package, Settings, ShoppingCart, User2, Plus, PieChart, Store } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import ProfileForm from '@/components/profile/ProfileForm';
-import { Tables } from '@/lib/database.types';
 import OrderManagement from '@/components/profile/OrderManagement';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as ChartTooltip, ResponsiveContainer } from 'recharts';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useToast } from '@/hooks/use-toast';
+import PhoneInput from 'react-phone-number-input';
+import 'react-phone-number-input/style.css';
+import { useAuth } from '@/context/AuthContext';
+import { Badge } from "@/components/ui/badge";
 
-type Profile = Tables<'profiles'>;
+interface Review {
+  id: number;
+  rating: number;
+  content: string;
+  authorName: string;
+  createdAt: string;
+  isRead: boolean;
+  reply?: string;
+  replyDate?: string;
+}
 
 const ProfilePage = () => {
-  const router = useRouter();
   const supabase = createClientComponentClient();
-  const [profile, setProfile] = useState<Profile | null>(null);
+  const { toast } = useToast();
+  const { profile } = useAuth();
   const [activeView, setActiveView] = useState('dashboard');
   const [paymentAmount, setPaymentAmount] = useState('');
   const [paymentDescription, setPaymentDescription] = useState('');
   const [generatedLink, setGeneratedLink] = useState('');
+  const [showSellerDialog, setShowSellerDialog] = useState(false);
+  const [verificationStep, setVerificationStep] = useState<'initial' | 'success'>('initial');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [companyName, setCompanyName] = useState(profile?.company_profile?.company_name || '');
+  const [companyAddress, setCompanyAddress] = useState(profile?.company_profile?.company_address || '');
+  const [companyDescription, setCompanyDescription] = useState(profile?.company_profile?.company_description || '');
+  const [replyText, setReplyText] = useState('');
+  const [unreadReviews, setUnreadReviews] = useState(3);
 
-  useEffect(() => {
-    const fetchProfile = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { data: profile, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', user.id)
-          .single();
-        
-        if (error) {
-          console.error('Error fetching profile:', error);
-        } else {
-          setProfile(profile);
-        }
-      }
-    };
-    fetchProfile();
-  }, [supabase]);
+  const mockReviews: Review[] = [
+    {
+      id: 1,
+      rating: 4,
+      content: "Great product and excellent service! The quality exceeded my expectations.",
+      authorName: "John Doe",
+      createdAt: "2 days ago",
+      isRead: false,
+      reply: "Thank you for your kind words! We're glad you enjoyed our service.",
+      replyDate: "1 day ago"
+    },
+    {
+      id: 2,
+      rating: 5,
+      content: "Amazing seller, very responsive and professional.",
+      authorName: "Jane Smith",
+      createdAt: "3 days ago",
+      isRead: true
+    },
+    {
+      id: 3,
+      rating: 4,
+      content: "Good communication and fast shipping.",
+      authorName: "Mike Johnson",
+      createdAt: "1 week ago",
+      isRead: false
+    }
+  ];
 
-  const handleSignOut = async () => {
+  const handleBecomeSellerRequest = async () => {
+    if (!profile) return;
+
+    setIsSubmitting(true);
     try {
-      await supabase.auth.signOut();
-      router.push('/sign-in');
+      const { data: existingVerification, error: fetchError } = await supabase
+        .from('seller_verifications')
+        .select('*')
+        .eq('user_id', profile.id)
+        .single();
+
+      if (fetchError && fetchError.code !== 'PGRST116') {
+        throw fetchError;
+      }
+
+      if (existingVerification) {
+        setVerificationStep('success');
+        return;
+      }
+
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({
+          company_profile: {
+            company_name: companyName,
+            company_address: companyAddress,
+            company_description: companyDescription
+          }
+        })
+        .eq('id', profile.id);
+
+      if (profileError) throw profileError;
+
+      const { error: verificationError } = await supabase
+        .from('seller_verifications')
+        .insert([
+          {
+            user_id: profile.id,
+            company_name: companyName,
+            company_address: companyAddress,
+            phone_number: profile.phone_number,
+            company_description: companyDescription
+          }
+        ]);
+
+      if (verificationError) throw verificationError;
+
+      toast({
+        title: "Verification Submitted",
+        description: "Your seller verification request has been submitted successfully.",
+        variant: "success"
+      });
+
+      setVerificationStep('success');
+
     } catch (error) {
-      console.error('Error signing out:', error);
+      console.error('Error submitting verification:', error);
+      toast({
+        title: "Error",
+        description: "Failed to submit verification request. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleCreatePaymentLink = (e: React.FormEvent) => {
     e.preventDefault();
     setGeneratedLink(`https://example.com/pay/${Math.random().toString(36).substr(2, 9)}`);
+  };
+
+  const handleReplySubmit = async (reviewId: number) => {
+    if (!replyText.trim()) return;
+
+    try {
+      // Add your API call here to save the reply
+      toast({
+        title: "Reply Posted",
+        description: "Your reply has been posted successfully.",
+        variant: "success"
+      });
+      setReplyText('');
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to post reply. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const renderReviewsSection = () => {
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <h2 className="text-2xl font-bold text-brand-200">Reviews</h2>
+          <div className="flex gap-4">
+            <Badge variant="secondary" className="bg-brand-100">
+              Total Reviews: {mockReviews.length}
+            </Badge>
+            {unreadReviews > 0 && (
+              <Badge variant="destructive" className="bg-red-500">
+                {unreadReviews} Unread
+              </Badge>
+            )}
+          </div>
+        </div>
+
+        <div className="grid gap-6">
+          <Card className="border-brand-100 shadow-lg">
+            <CardHeader>
+              <CardTitle className="text-brand-200">Review Statistics</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-4 gap-4 mb-6">
+                {[5,4,3,2,1].map((rating) => (
+                  <div key={rating} className="flex items-center gap-2">
+                    <div className="flex items-center">
+                      <Star className="h-4 w-4 text-yellow-400" />
+                      <span className="ml-1">{rating}</span>
+                    </div>
+                    <div className="flex-1 h-2 bg-gray-200 rounded-full">
+                      <div 
+                        className="h-2 bg-brand-200 rounded-full" 
+                        style={{width: `${Math.random() * 100}%`}}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-brand-100 shadow-lg">
+            <CardHeader>
+              <CardTitle className="text-brand-200">Recent Reviews</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-6">
+                {mockReviews.map((review) => (
+                  <div key={review.id} className="border-b border-brand-100 pb-6 last:border-0">
+                    <div className="flex justify-between items-start mb-2">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <div className="flex">
+                            {[...Array(5)].map((_, i) => (
+                              <Star 
+                                key={i} 
+                                className={`h-4 w-4 ${i < review.rating ? 'text-yellow-400' : 'text-gray-300'}`}
+                              />
+                            ))}
+                          </div>
+                          {!review.isRead && (
+                            <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+                              New
+                            </Badge>
+                          )}
+                        </div>
+                        <h4 className="font-medium mt-2">{review.authorName}</h4>
+                      </div>
+                      <span className="text-sm text-gray-500">{review.createdAt}</span>
+                    </div>
+                    
+                    <p className="text-gray-700 mb-4">{review.content}</p>
+
+                    <div className="pl-6 border-l-2 border-brand-100 mt-4">
+                      <div className="space-y-2">
+                        {review.reply && (
+                          <div className="bg-gray-50 p-3 rounded-lg">
+                            <p className="text-sm text-gray-600">{review.reply}</p>
+                            <span className="text-xs text-gray-500 mt-1 block">
+                              Replied {review.replyDate}
+                            </span>
+                          </div>
+                        )}
+                        
+                        {!review.reply && (
+                          <div className="space-y-2">
+                            <Textarea
+                              placeholder="Write a public reply..."
+                              className="text-sm border-brand-100 focus:border-brand-200"
+                              value={replyText}
+                              onChange={(e) => setReplyText(e.target.value)}
+                            />
+                            <Button 
+                              size="sm"
+                              className="bg-brand-200 hover:bg-brand-300 text-white"
+                              onClick={() => handleReplySubmit(review.id)}
+                            >
+                              Post Reply
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
   };
 
   const renderContent = () => {
@@ -104,14 +325,14 @@ const ProfilePage = () => {
               <Card className="border-brand-100 shadow-lg hover:shadow-xl transition-shadow duration-300">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium text-brand-200">
-                    New Messages
+                    Unread Reviews
                   </CardTitle>
-                  <MessageSquare className="h-4 w-4 text-brand-200" />
+                  <Star className="h-4 w-4 text-brand-200" />
                 </CardHeader>
                 <CardContent className="pt-4">
-                  <div className="text-2xl font-bold text-brand-200">24</div>
+                  <div className="text-2xl font-bold text-brand-200">{unreadReviews}</div>
                   <p className="text-xs text-brand-300">
-                    +5 since yesterday
+                    +2 since yesterday
                   </p>
                 </CardContent>
               </Card>
@@ -176,6 +397,8 @@ const ProfilePage = () => {
             </CardContent>
           </Card>
         );
+      case 'reviews':
+        return renderReviewsSection();
       case 'create-payment':
         return (
           <div className="space-y-4">
@@ -238,11 +461,19 @@ const ProfilePage = () => {
             { view: 'dashboard', icon: LayoutDashboard, label: 'Dashboard' },
             { view: 'profile', icon: User2, label: 'Profile' },
             { view: 'orders', icon: ShoppingCart, label: 'Orders' },
-            { view: 'messages', icon: MessageSquare, label: 'Messages' },
+            { 
+              view: 'reviews', 
+              icon: Star, 
+              label: 'Reviews',
+              badge: unreadReviews > 0 ? unreadReviews : undefined
+            },
             { view: 'analytics', icon: PieChart, label: 'Analytics' },
-            ...(profile?.user_type === 'SELLER' ? [{ view: 'create-payment', icon: Plus, label: 'Create Payment Link' }] : []),
+            ...(profile?.user_type === 'SELLER' 
+              ? [{ view: 'create-payment', icon: Plus, label: 'Create Payment Link' }] 
+              : [{ view: 'become-seller', icon: Store, label: 'Become a Seller', onClick: () => setShowSellerDialog(true) }]
+            ),
             { view: 'settings', icon: Settings, label: 'Settings' }
-          ].map(({ view, icon: Icon, label }) => (
+          ].map(({ view, icon: Icon, label, onClick, badge }) => (
             <Button 
               key={view}
               variant={activeView === view ? 'default' : 'ghost'} 
@@ -251,10 +482,18 @@ const ProfilePage = () => {
                   ? 'bg-brand-200 text-white hover:bg-brand-300' 
                   : 'hover:bg-brand-100 hover:text-brand-200'
               }`}
-              onClick={() => setActiveView(view)}
+              onClick={onClick || (() => setActiveView(view))}
             >
               <Icon className="mr-2 h-4 w-4" />
               {label}
+              {badge && (
+                <Badge 
+                  variant="destructive" 
+                  className="ml-auto bg-red-500"
+                >
+                  {badge}
+                </Badge>
+              )}
             </Button>
           ))}
         </nav>
