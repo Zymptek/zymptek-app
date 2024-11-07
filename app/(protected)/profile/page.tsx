@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from 'react';
-import { LayoutDashboard, Star, Package, Settings, ShoppingCart, User2, Plus, PieChart, Store } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { LayoutDashboard, MessageSquare, Package, Settings, ShoppingCart, User2, Plus, PieChart, Store } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import ProfileForm from '@/components/profile/ProfileForm';
+import { Tables } from '@/lib/database.types';
 import OrderManagement from '@/components/profile/OrderManagement';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as ChartTooltip, ResponsiveContainer } from 'recharts';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -23,18 +24,6 @@ import { useToast } from '@/hooks/use-toast';
 import PhoneInput from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
 import { useAuth } from '@/context/AuthContext';
-import { Badge } from "@/components/ui/badge";
-
-interface Review {
-  id: number;
-  rating: number;
-  content: string;
-  authorName: string;
-  createdAt: string;
-  isRead: boolean;
-  reply?: string;
-  replyDate?: string;
-}
 
 const ProfilePage = () => {
   const supabase = createClientComponentClient();
@@ -50,37 +39,6 @@ const ProfilePage = () => {
   const [companyName, setCompanyName] = useState(profile?.company_profile?.company_name || '');
   const [companyAddress, setCompanyAddress] = useState(profile?.company_profile?.company_address || '');
   const [companyDescription, setCompanyDescription] = useState(profile?.company_profile?.company_description || '');
-  const [replyText, setReplyText] = useState('');
-  const [unreadReviews, setUnreadReviews] = useState(3);
-
-  const mockReviews: Review[] = [
-    {
-      id: 1,
-      rating: 4,
-      content: "Great product and excellent service! The quality exceeded my expectations.",
-      authorName: "John Doe",
-      createdAt: "2 days ago",
-      isRead: false,
-      reply: "Thank you for your kind words! We're glad you enjoyed our service.",
-      replyDate: "1 day ago"
-    },
-    {
-      id: 2,
-      rating: 5,
-      content: "Amazing seller, very responsive and professional.",
-      authorName: "Jane Smith",
-      createdAt: "3 days ago",
-      isRead: true
-    },
-    {
-      id: 3,
-      rating: 4,
-      content: "Good communication and fast shipping.",
-      authorName: "Mike Johnson",
-      createdAt: "1 week ago",
-      isRead: false
-    }
-  ];
 
   const handleBecomeSellerRequest = async () => {
     if (!profile) return;
@@ -102,6 +60,7 @@ const ProfilePage = () => {
         return;
       }
 
+      // Update profiles table with company information
       const { error: profileError } = await supabase
         .from('profiles')
         .update({
@@ -115,6 +74,7 @@ const ProfilePage = () => {
 
       if (profileError) throw profileError;
 
+      // Create seller verification entry
       const { error: verificationError } = await supabase
         .from('seller_verifications')
         .insert([
@@ -154,137 +114,161 @@ const ProfilePage = () => {
     setGeneratedLink(`https://example.com/pay/${Math.random().toString(36).substr(2, 9)}`);
   };
 
-  const handleReplySubmit = async (reviewId: number) => {
-    if (!replyText.trim()) return;
+  const renderSellerDialog = () => {
+    const isIndianUser = profile?.country === 'India' || profile?.country === 'IN';
 
-    try {
-      // Add your API call here to save the reply
-      toast({
-        title: "Reply Posted",
-        description: "Your reply has been posted successfully.",
-        variant: "success"
-      });
-      setReplyText('');
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to post reply. Please try again.",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const renderReviewsSection = () => {
     return (
-      <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <h2 className="text-2xl font-bold text-brand-200">Reviews</h2>
-          <div className="flex gap-4">
-            <Badge variant="secondary" className="bg-brand-100">
-              Total Reviews: {mockReviews.length}
-            </Badge>
-            {unreadReviews > 0 && (
-              <Badge variant="destructive" className="bg-red-500">
-                {unreadReviews} Unread
-              </Badge>
-            )}
-          </div>
-        </div>
+      <Dialog open={showSellerDialog} onOpenChange={setShowSellerDialog}>
+        <DialogContent className="sm:max-w-[425px]">
+          {isIndianUser && verificationStep === "success" && (
+            <DialogHeader>
+              <DialogTitle className="text-brand-200">Become a Seller</DialogTitle>
+              <DialogDescription>
+                Join our marketplace as a seller and start growing your business.
+              </DialogDescription>
+            </DialogHeader>
+          )}
 
-        <div className="grid gap-6">
-          <Card className="border-brand-100 shadow-lg">
-            <CardHeader>
-              <CardTitle className="text-brand-200">Review Statistics</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-4 gap-4 mb-6">
-                {[5,4,3,2,1].map((rating) => (
-                  <div key={rating} className="flex items-center gap-2">
-                    <div className="flex items-center">
-                      <Star className="h-4 w-4 text-yellow-400" />
-                      <span className="ml-1">{rating}</span>
-                    </div>
-                    <div className="flex-1 h-2 bg-gray-200 rounded-full">
-                      <div 
-                        className="h-2 bg-brand-200 rounded-full" 
-                        style={{width: `${Math.random() * 100}%`}}
+          <AnimatePresence mode="wait">
+            {isIndianUser ? (
+              verificationStep === 'initial' ? (
+                <motion.div
+                  key="verification"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  className="py-4"
+                >
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="phone" className="text-brand-200">Verify Phone Number</Label>
+                      <PhoneInput
+                        international
+                        countryCallingCodeEditable={false}
+                        value={profile?.phone_number}
+                        onChange={(value) => value}
+                        className="border-brand-100 focus:border-brand-200"
                       />
                     </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-brand-100 shadow-lg">
-            <CardHeader>
-              <CardTitle className="text-brand-200">Recent Reviews</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-6">
-                {mockReviews.map((review) => (
-                  <div key={review.id} className="border-b border-brand-100 pb-6 last:border-0">
-                    <div className="flex justify-between items-start mb-2">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <div className="flex">
-                            {[...Array(5)].map((_, i) => (
-                              <Star 
-                                key={i} 
-                                className={`h-4 w-4 ${i < review.rating ? 'text-yellow-400' : 'text-gray-300'}`}
-                              />
-                            ))}
-                          </div>
-                          {!review.isRead && (
-                            <Badge variant="secondary" className="bg-blue-100 text-blue-800">
-                              New
-                            </Badge>
-                          )}
-                        </div>
-                        <h4 className="font-medium mt-2">{review.authorName}</h4>
-                      </div>
-                      <span className="text-sm text-gray-500">{review.createdAt}</span>
+                    <div className="space-y-2">
+                      <Label htmlFor="companyName" className="text-brand-200">Company Name</Label>
+                      <Input
+                        id="companyName"
+                        value={companyName}
+                        onChange={(e) => setCompanyName(e.target.value)}
+                        className="border-brand-100 focus:border-brand-200"
+                      />
                     </div>
-                    
-                    <p className="text-gray-700 mb-4">{review.content}</p>
-
-                    <div className="pl-6 border-l-2 border-brand-100 mt-4">
-                      <div className="space-y-2">
-                        {review.reply && (
-                          <div className="bg-gray-50 p-3 rounded-lg">
-                            <p className="text-sm text-gray-600">{review.reply}</p>
-                            <span className="text-xs text-gray-500 mt-1 block">
-                              Replied {review.replyDate}
-                            </span>
-                          </div>
-                        )}
-                        
-                        {!review.reply && (
-                          <div className="space-y-2">
-                            <Textarea
-                              placeholder="Write a public reply..."
-                              className="text-sm border-brand-100 focus:border-brand-200"
-                              value={replyText}
-                              onChange={(e) => setReplyText(e.target.value)}
-                            />
-                            <Button 
-                              size="sm"
-                              className="bg-brand-200 hover:bg-brand-300 text-white"
-                              onClick={() => handleReplySubmit(review.id)}
-                            >
-                              Post Reply
-                            </Button>
-                          </div>
-                        )}
-                      </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="companyAddress" className="text-brand-200">Company Address</Label>
+                      <Textarea
+                        id="companyAddress"
+                        value={companyAddress}
+                        onChange={(e) => setCompanyAddress(e.target.value)}
+                        className="border-brand-100 focus:border-brand-200"
+                      />
                     </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="companyDescription" className="text-brand-200">Company Description</Label>
+                      <Textarea
+                        id="companyDescription"
+                        value={companyDescription}
+                        onChange={(e) => setCompanyDescription(e.target.value)}
+                        className="border-brand-100 focus:border-brand-200"
+                      />
+                    </div>
+                    <Button
+                      onClick={handleBecomeSellerRequest}
+                      className="w-full bg-brand-200 hover:bg-brand-300 text-white"
+                      disabled={isSubmitting}
+                    >
+                      {isSubmitting ? (
+                        <motion.div
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          className="flex items-center"
+                        >
+                          <span className="mr-2">Processing</span>
+                          <motion.div
+                            animate={{ rotate: 360 }}
+                            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                          >
+                            ⚬
+                          </motion.div>
+                        </motion.div>
+                      ) : (
+                        "Confirm & Submit"
+                      )}
+                    </Button>
                   </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="success"
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  className="py-4 text-center"
+                >
+                  <div className="mb-4">
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ type: "spring", stiffness: 200, damping: 10 }}
+                      className="w-16 h-16 bg-green-100 rounded-full mx-auto flex items-center justify-center"
+                    >
+                      <Store className="w-8 h-8 text-green-600" />
+                    </motion.div>
+                  </div>
+                  <h3 className="text-lg font-semibold text-brand-200 mb-2">
+                    Request Submitted Successfully!
+                  </h3>
+                  <p className="text-sm text-gray-600">
+                    Our team will review your application and contact you soon.
+                  </p>
+                  <Button
+                    onClick={() => setShowSellerDialog(false)}
+                    className="mt-4 bg-brand-200 hover:bg-brand-300 text-white"
+                  >
+                    Close
+                  </Button>
+                </motion.div>
+              )
+            ) : (
+              <motion.div
+                key="not-available"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="py-4 text-center"
+              >
+                <div className="mb-4">
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ type: "spring", stiffness: 200, damping: 10 }}
+                    className="w-16 h-16 bg-red-100 rounded-full mx-auto flex items-center justify-center"
+                  >
+                    <Store className="w-8 h-8 text-red-600" />
+                  </motion.div>
+                </div>
+                <h3 className="text-lg font-semibold text-brand-200 mb-2">
+                  Service Not Available in Your Region
+                </h3>
+                <p className="text-sm text-gray-600 mb-4">
+                  We apologize, but seller registration is currently only available in India. Thank you for your interest!
+                </p>
+                <Button
+                  onClick={() => setShowSellerDialog(false)}
+                  className="bg-brand-200 hover:bg-brand-300 text-white"
+                >
+                  Close
+                </Button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </DialogContent>
+      </Dialog>
     );
   };
 
@@ -325,14 +309,14 @@ const ProfilePage = () => {
               <Card className="border-brand-100 shadow-lg hover:shadow-xl transition-shadow duration-300">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium text-brand-200">
-                    Unread Reviews
+                    New Messages
                   </CardTitle>
-                  <Star className="h-4 w-4 text-brand-200" />
+                  <MessageSquare className="h-4 w-4 text-brand-200" />
                 </CardHeader>
                 <CardContent className="pt-4">
-                  <div className="text-2xl font-bold text-brand-200">{unreadReviews}</div>
+                  <div className="text-2xl font-bold text-brand-200">24</div>
                   <p className="text-xs text-brand-300">
-                    +2 since yesterday
+                    +5 since yesterday
                   </p>
                 </CardContent>
               </Card>
@@ -397,8 +381,6 @@ const ProfilePage = () => {
             </CardContent>
           </Card>
         );
-      case 'reviews':
-        return renderReviewsSection();
       case 'create-payment':
         return (
           <div className="space-y-4">
@@ -461,19 +443,14 @@ const ProfilePage = () => {
             { view: 'dashboard', icon: LayoutDashboard, label: 'Dashboard' },
             { view: 'profile', icon: User2, label: 'Profile' },
             { view: 'orders', icon: ShoppingCart, label: 'Orders' },
-            { 
-              view: 'reviews', 
-              icon: Star, 
-              label: 'Reviews',
-              badge: unreadReviews > 0 ? unreadReviews : undefined
-            },
+            { view: 'messages', icon: MessageSquare, label: 'Messages' },
             { view: 'analytics', icon: PieChart, label: 'Analytics' },
             ...(profile?.user_type === 'SELLER' 
               ? [{ view: 'create-payment', icon: Plus, label: 'Create Payment Link' }] 
               : [{ view: 'become-seller', icon: Store, label: 'Become a Seller', onClick: () => setShowSellerDialog(true) }]
             ),
             { view: 'settings', icon: Settings, label: 'Settings' }
-          ].map(({ view, icon: Icon, label, onClick, badge }) => (
+          ].map(({ view, icon: Icon, label, onClick }) => (
             <Button 
               key={view}
               variant={activeView === view ? 'default' : 'ghost'} 
@@ -486,14 +463,6 @@ const ProfilePage = () => {
             >
               <Icon className="mr-2 h-4 w-4" />
               {label}
-              {badge && (
-                <Badge 
-                  variant="destructive" 
-                  className="ml-auto bg-red-500"
-                >
-                  {badge}
-                </Badge>
-              )}
             </Button>
           ))}
         </nav>
@@ -505,6 +474,7 @@ const ProfilePage = () => {
             Welcome, {profile?.first_name || 'User'}!
           </h1>
           {renderContent()}
+          {renderSellerDialog()}
         </main>
       </div>
     </div>
