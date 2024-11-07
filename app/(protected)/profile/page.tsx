@@ -16,7 +16,6 @@ import {
 } from "@/components/ui/dialog";
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import ProfileForm from '@/components/profile/ProfileForm';
-import { Tables } from '@/lib/database.types';
 import OrderManagement from '@/components/profile/OrderManagement';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as ChartTooltip, ResponsiveContainer } from 'recharts';
 import { motion, AnimatePresence } from 'framer-motion';
