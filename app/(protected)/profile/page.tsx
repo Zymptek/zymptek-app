@@ -1,70 +1,275 @@
 "use client";
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { Bell, Home, LayoutDashboard, MessageSquare, Package, Settings, ShoppingCart, Users, DollarSign, Link, User2, Plus, PieChart } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState } from 'react';
+import { LayoutDashboard, MessageSquare, Package, Settings, ShoppingCart, User2, Plus, PieChart, Store } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import ProfileForm from '@/components/profile/ProfileForm';
 import { Tables } from '@/lib/database.types';
 import OrderManagement from '@/components/profile/OrderManagement';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as ChartTooltip, ResponsiveContainer } from 'recharts';
-
-type Profile = Tables<'profiles'>;
+import { motion, AnimatePresence } from 'framer-motion';
+import { useToast } from '@/hooks/use-toast';
+import PhoneInput from 'react-phone-number-input';
+import 'react-phone-number-input/style.css';
+import { useAuth } from '@/context/AuthContext';
 
 const ProfilePage = () => {
-  const router = useRouter();
   const supabase = createClientComponentClient();
-  const [profile, setProfile] = useState<Profile | null>(null);
+  const { toast } = useToast();
+  const { profile } = useAuth();
   const [activeView, setActiveView] = useState('dashboard');
   const [paymentAmount, setPaymentAmount] = useState('');
   const [paymentDescription, setPaymentDescription] = useState('');
   const [generatedLink, setGeneratedLink] = useState('');
+  const [showSellerDialog, setShowSellerDialog] = useState(false);
+  const [verificationStep, setVerificationStep] = useState<'initial' | 'success'>('initial');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [companyName, setCompanyName] = useState(profile?.company_profile?.company_name || '');
+  const [companyAddress, setCompanyAddress] = useState(profile?.company_profile?.company_address || '');
+  const [companyDescription, setCompanyDescription] = useState(profile?.company_profile?.company_description || '');
 
-  useEffect(() => {
-    const fetchProfile = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { data: profile, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', user.id)
-          .single();
-        
-        if (error) {
-          console.error('Error fetching profile:', error);
-        } else {
-          setProfile(profile);
-        }
-      }
-    };
-    fetchProfile();
-  }, [supabase]);
+  const handleBecomeSellerRequest = async () => {
+    if (!profile) return;
 
-  const handleSignOut = async () => {
+    setIsSubmitting(true);
     try {
-      await supabase.auth.signOut();
-      router.push('/sign-in');
+      const { data: existingVerification, error: fetchError } = await supabase
+        .from('seller_verifications')
+        .select('*')
+        .eq('user_id', profile.id)
+        .single();
+
+      if (fetchError && fetchError.code !== 'PGRST116') {
+        throw fetchError;
+      }
+
+      if (existingVerification) {
+        setVerificationStep('success');
+        return;
+      }
+
+      // Update profiles table with company information
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({
+          company_profile: {
+            company_name: companyName,
+            company_address: companyAddress,
+            company_description: companyDescription
+          }
+        })
+        .eq('id', profile.id);
+
+      if (profileError) throw profileError;
+
+      // Create seller verification entry
+      const { error: verificationError } = await supabase
+        .from('seller_verifications')
+        .insert([
+          {
+            user_id: profile.id,
+            company_name: companyName,
+            company_address: companyAddress,
+            phone_number: profile.phone_number,
+            company_description: companyDescription
+          }
+        ]);
+
+      if (verificationError) throw verificationError;
+
+      toast({
+        title: "Verification Submitted",
+        description: "Your seller verification request has been submitted successfully.",
+        variant: "success"
+      });
+
+      setVerificationStep('success');
+
     } catch (error) {
-      console.error('Error signing out:', error);
+      console.error('Error submitting verification:', error);
+      toast({
+        title: "Error",
+        description: "Failed to submit verification request. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleCreatePaymentLink = (e: React.FormEvent) => {
     e.preventDefault();
     setGeneratedLink(`https://example.com/pay/${Math.random().toString(36).substr(2, 9)}`);
+  };
+
+  const renderSellerDialog = () => {
+    const isIndianUser = profile?.country === 'India' || profile?.country === 'IN';
+
+    return (
+      <Dialog open={showSellerDialog} onOpenChange={setShowSellerDialog}>
+        <DialogContent className="sm:max-w-[425px]">
+          {isIndianUser && verificationStep === "success" && (
+            <DialogHeader>
+              <DialogTitle className="text-brand-200">Become a Seller</DialogTitle>
+              <DialogDescription>
+                Join our marketplace as a seller and start growing your business.
+              </DialogDescription>
+            </DialogHeader>
+          )}
+
+          <AnimatePresence mode="wait">
+            {isIndianUser ? (
+              verificationStep === 'initial' ? (
+                <motion.div
+                  key="verification"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  className="py-4"
+                >
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="phone" className="text-brand-200">Verify Phone Number</Label>
+                      <PhoneInput
+                        international
+                        countryCallingCodeEditable={false}
+                        value={profile?.phone_number}
+                        onChange={(value) => value}
+                        className="border-brand-100 focus:border-brand-200"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="companyName" className="text-brand-200">Company Name</Label>
+                      <Input
+                        id="companyName"
+                        value={companyName}
+                        onChange={(e) => setCompanyName(e.target.value)}
+                        className="border-brand-100 focus:border-brand-200"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="companyAddress" className="text-brand-200">Company Address</Label>
+                      <Textarea
+                        id="companyAddress"
+                        value={companyAddress}
+                        onChange={(e) => setCompanyAddress(e.target.value)}
+                        className="border-brand-100 focus:border-brand-200"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="companyDescription" className="text-brand-200">Company Description</Label>
+                      <Textarea
+                        id="companyDescription"
+                        value={companyDescription}
+                        onChange={(e) => setCompanyDescription(e.target.value)}
+                        className="border-brand-100 focus:border-brand-200"
+                      />
+                    </div>
+                    <Button
+                      onClick={handleBecomeSellerRequest}
+                      className="w-full bg-brand-200 hover:bg-brand-300 text-white"
+                      disabled={isSubmitting}
+                    >
+                      {isSubmitting ? (
+                        <motion.div
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          className="flex items-center"
+                        >
+                          <span className="mr-2">Processing</span>
+                          <motion.div
+                            animate={{ rotate: 360 }}
+                            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                          >
+                            ⚬
+                          </motion.div>
+                        </motion.div>
+                      ) : (
+                        "Confirm & Submit"
+                      )}
+                    </Button>
+                  </div>
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="success"
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  className="py-4 text-center"
+                >
+                  <div className="mb-4">
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ type: "spring", stiffness: 200, damping: 10 }}
+                      className="w-16 h-16 bg-green-100 rounded-full mx-auto flex items-center justify-center"
+                    >
+                      <Store className="w-8 h-8 text-green-600" />
+                    </motion.div>
+                  </div>
+                  <h3 className="text-lg font-semibold text-brand-200 mb-2">
+                    Request Submitted Successfully!
+                  </h3>
+                  <p className="text-sm text-gray-600">
+                    Our team will review your application and contact you soon.
+                  </p>
+                  <Button
+                    onClick={() => setShowSellerDialog(false)}
+                    className="mt-4 bg-brand-200 hover:bg-brand-300 text-white"
+                  >
+                    Close
+                  </Button>
+                </motion.div>
+              )
+            ) : (
+              <motion.div
+                key="not-available"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="py-4 text-center"
+              >
+                <div className="mb-4">
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ type: "spring", stiffness: 200, damping: 10 }}
+                    className="w-16 h-16 bg-red-100 rounded-full mx-auto flex items-center justify-center"
+                  >
+                    <Store className="w-8 h-8 text-red-600" />
+                  </motion.div>
+                </div>
+                <h3 className="text-lg font-semibold text-brand-200 mb-2">
+                  Service Not Available in Your Region
+                </h3>
+                <p className="text-sm text-gray-600 mb-4">
+                  We apologize, but seller registration is currently only available in India. Thank you for your interest!
+                </p>
+                <Button
+                  onClick={() => setShowSellerDialog(false)}
+                  className="bg-brand-200 hover:bg-brand-300 text-white"
+                >
+                  Close
+                </Button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </DialogContent>
+      </Dialog>
+    );
   };
 
   const renderContent = () => {
@@ -240,9 +445,12 @@ const ProfilePage = () => {
             { view: 'orders', icon: ShoppingCart, label: 'Orders' },
             { view: 'messages', icon: MessageSquare, label: 'Messages' },
             { view: 'analytics', icon: PieChart, label: 'Analytics' },
-            ...(profile?.user_type === 'SELLER' ? [{ view: 'create-payment', icon: Plus, label: 'Create Payment Link' }] : []),
+            ...(profile?.user_type === 'SELLER' 
+              ? [{ view: 'create-payment', icon: Plus, label: 'Create Payment Link' }] 
+              : [{ view: 'become-seller', icon: Store, label: 'Become a Seller', onClick: () => setShowSellerDialog(true) }]
+            ),
             { view: 'settings', icon: Settings, label: 'Settings' }
-          ].map(({ view, icon: Icon, label }) => (
+          ].map(({ view, icon: Icon, label, onClick }) => (
             <Button 
               key={view}
               variant={activeView === view ? 'default' : 'ghost'} 
@@ -251,7 +459,7 @@ const ProfilePage = () => {
                   ? 'bg-brand-200 text-white hover:bg-brand-300' 
                   : 'hover:bg-brand-100 hover:text-brand-200'
               }`}
-              onClick={() => setActiveView(view)}
+              onClick={onClick || (() => setActiveView(view))}
             >
               <Icon className="mr-2 h-4 w-4" />
               {label}
@@ -266,6 +474,7 @@ const ProfilePage = () => {
             Welcome, {profile?.first_name || 'User'}!
           </h1>
           {renderContent()}
+          {renderSellerDialog()}
         </main>
       </div>
     </div>
