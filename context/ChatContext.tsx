@@ -203,8 +203,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
         sender_id: user.id,
         content,
         file_url: fileUrl,
-        file_type: fileType,
-        type: fileType || 'text'
+        file_type: fileType
       };
 
       const { data, error } = await supabase

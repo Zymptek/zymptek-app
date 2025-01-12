@@ -14,6 +14,8 @@ import { useAuth } from '@/context/AuthContext'
 import FileUpload from '@/components/chat/FileUpload'
 import ChatMessage from '@/components/chat/ChatMessage'
 import { useToast } from "@/hooks/use-toast"
+import { CreateOrderButton } from '@/components/order/CreateOrderButton'
+import { Badge } from "@/components/ui/badge"
 
 const ChatWindow: React.FC = () => {
   const { 
@@ -39,6 +41,7 @@ const ChatWindow: React.FC = () => {
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const { toast } = useToast()
   const [isMobile, setIsMobile] = useState(false)
+  const [showOrderOptions, setShowOrderOptions] = useState(false)
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768)
@@ -182,10 +185,17 @@ const ChatWindow: React.FC = () => {
             <h2 className="font-semibold">{otherUser?.first_name || 'Unknown'} {otherUser?.last_name || ''}</h2>
           </div>
         </div>
-        <Button variant="ghost" size="icon" className="text-black hover:text-brand-100">
-          <MoreVertical className="h-5 w-5" />
-        </Button>
+        {currentUser?.id === currentConversation.buyer_id && (
+          <div className="flex items-center justify-between">
+            <CreateOrderButton 
+              sellerId={currentConversation.seller_id}
+              productId={currentConversation.product_id}
+              conversationId={currentConversation.id}
+            />
+        </div>
+      )}
       </div>
+
       <ScrollArea className="flex-grow p-4 bg-background-light" ref={scrollAreaRef}>
         <AnimatePresence>
           {messages.map((message) => (
