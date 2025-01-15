@@ -1,7 +1,6 @@
 import type { Config } from "tailwindcss"
 
 const config = {
-  darkMode: ['class', 'class'], // Enables dark mode class-based toggling
   content: [
     "./pages/**/*.{ts,tsx}",
     "./components/**/*.{ts,tsx}",
@@ -23,19 +22,15 @@ const config = {
   			},
   			background: {
   				light: 'var(--background-light)',
-  				dark: 'var(--background-dark)'
   			},
   			text: {
   				light: 'var(--text-light)',
-  				dark: 'var(--text-dark)'
   			},
   			border: {
   				light: 'var(--border-light)',
-  				dark: 'var(--border-dark)'
   			},
   			hoverBg: {
   				light: 'var(--hover-bg-light)',
-  				dark: 'var(--hover-bg-dark)'
   			},
   			sidebar: {
   				DEFAULT: 'hsl(var(--sidebar-background))',
