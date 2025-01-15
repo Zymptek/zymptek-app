@@ -1,5 +1,4 @@
 import { Inter } from "next/font/google";
-import { ThemeProvider } from "next-themes";
 import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
 import { Toaster } from "@/components/ui/toaster";
@@ -26,29 +25,21 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  
   return (
-    <html lang="en" className={inter.className} suppressHydrationWarning>
+    <html lang="en" className={inter.className}>
       <body className="bg-background-light text-foreground">
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <AuthProvider>        
-            <ChatProvider>
-              <NavbarWrapper />
-              <main className="min-h-screen flex flex-col items-center">
-                <div className="flex flex-col gap-20 w-full">
-                  {children}
-                </div>
-                <Toaster />
-              </main>
-              <Footer />
-            </ChatProvider>
-          </AuthProvider>
-        </ThemeProvider>
+        <AuthProvider>        
+          <ChatProvider>
+            <NavbarWrapper />
+            <main className="min-h-screen flex flex-col items-center">
+              <div className="flex flex-col gap-20 w-full">
+                {children}
+              </div>
+              <Toaster />
+            </main>
+            <Footer />
+          </ChatProvider>
+        </AuthProvider>
       </body>
     </html>
   );
