@@ -1,7 +1,28 @@
-import React from 'react'
+"use client"
+import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { Sheet, SheetContent } from "@/components/ui/sheet"
+import { Loader2 } from 'lucide-react'
 
 const Footer = () => {
+  const [showTypeform, setShowTypeform] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    if (showTypeform) {
+      const script = document.createElement('script');
+      script.src = "//embed.typeform.com/next/embed.js";
+      script.async = true;
+      script.onload = () => setIsLoading(false);
+      document.body.appendChild(script);
+
+      return () => {
+        document.body.removeChild(script);
+        setIsLoading(true);
+      };
+    }
+  }, [showTypeform]);
+
   return (
     <footer className="bg-brand-200 text-white py-12">
         <div className="container mx-auto px-4">
@@ -40,13 +61,29 @@ const Footer = () => {
               <p className="text-sm mb-2">Email: info@zymptek.com</p>
               <p className="text-sm mb-2">Phone: +91 123 456 7890</p>
               <p className="text-sm mb-4">Address: 123 Business Street, Tech Park, Bangalore, India 560001</p>
-              <Link href="/contact" className="text-white hover:text-white border-2 border-white px-4 py-2 rounded-full text-sm hover:bg-brand-300 transition-colors">Get in Touch</Link>
+              <button 
+                onClick={() => setShowTypeform(true)}
+                className="text-white hover:text-white border-2 border-white px-4 py-2 rounded-full text-sm hover:bg-brand-300 transition-colors"
+              >
+                Get in Touch
+              </button>
             </div>
           </div>
           <div className="mt-12 pt-8 border-t border-brand-300 text-center text-sm">
             <p>&copy; 2023 Zymptek. All rights reserved.</p>
           </div>
         </div>
+
+        <Sheet open={showTypeform} onOpenChange={setShowTypeform}>
+          <SheetContent side="right" className="w-full sm:w-3/4 lg:w-[75%] p-0 h-full bg-white">
+            {isLoading && (
+              <div className="w-full h-full flex items-center justify-center bg-white">
+                <Loader2 className="h-8 w-8 animate-spin text-brand-300" />
+              </div>
+            )}
+            <div data-tf-live="01JHKNZ8W300RXPAD542EMZVJQ" className="h-full"></div>
+          </SheetContent>
+        </Sheet>
       </footer>
   )
 }

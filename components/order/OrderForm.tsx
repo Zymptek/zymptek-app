@@ -9,7 +9,7 @@ import { useToast } from "@/hooks/use-toast"
 
 interface OrderFormProps {
   sellerId: string
-  productId: string
+  productId?: string
   conversationId: string
   onSuccess: () => void
 }

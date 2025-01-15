@@ -1,48 +1,84 @@
-"use client";
+'use client'
 
-import React, { useState, useEffect } from 'react';
-import { useChat } from '@/context/ChatContext';
-import ChatList from '@/components/chat/ChatList';
-import ChatWindow from '@/components/chat/ChatWindow';
-import { MessageSquare } from 'lucide-react';
+import { useState, useEffect } from 'react'
+import { MessageSquare } from 'lucide-react'
+import { ChatProvider, useChat } from '@/context/ChatContext'
+import ChatWindow from '@/components/chat/ChatWindow'
+import ChatSidebar from '@/components/chat/ChatSidebar'
+import { cn } from '@/lib/utils'
 
-const MessagesPage: React.FC = () => {
-  const { currentConversation, conversations } = useChat();
-  const [isMobile, setIsMobile] = useState(false);
+function MessagesContent() {
+  const { conversations, currentConversation } = useChat()
+  const [isMobile, setIsMobile] = useState(false)
 
   useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768);
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
+    const checkMobile = () => setIsMobile(window.innerWidth < 768)
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
+
+  // Hide footer when component mounts
+  useEffect(() => {
+    const footer = document.querySelector('footer')
+    if (footer) {
+      footer.style.display = 'none'
+    }
+    
+    // Show footer when component unmounts
+    return () => {
+      if (footer) {
+        footer.style.display = 'block'
+      }
+    }
+  }, [])
+
+  if (conversations.length === 0) {
+    return (
+      <div className="h-[calc(100vh-4rem)] w-full flex flex-col items-center justify-center space-y-4 bg-background">
+        <div className="p-6 rounded-full bg-brand-100/10 ring-1 ring-brand-200/20">
+          <MessageSquare className="w-12 h-12 text-brand-200" />
+        </div>
+        <p className="text-lg text-brand-200">Your messages will appear here</p>
+      </div>
+    )
+  }
 
   return (
-    <div className="flex h-screen bg-background overflow-hidden">
-      {conversations.length === 0 ? (
-        <div className="h-full w-full flex flex-col items-center justify-center">
-          <MessageSquare className="w-16 h-16 mb-4 text-brand-300" />
-          <p className="text-2xl text-brand-300">No conversations yet</p>
-          <p className="text-brand-200 mt-2">Start a new chat to begin messaging</p>
-        </div>
-      ) : (
-        <>
-          <div className={`w-full md:w-1/3 h-full ${isMobile && currentConversation ? 'hidden' : 'block'}`}>
-            <ChatList />
-          </div>
-          <div className={`w-full md:w-2/3 h-full ${isMobile && !currentConversation ? 'hidden' : 'block'}`}>
-            {currentConversation ? (
-              <ChatWindow />
-            ) : (
-              <div className="h-full flex items-center justify-center bg-background-light">
-                <p className="text-xl text-brand-300">Select a conversation to start chatting</p>
-              </div>
-            )}
-          </div>
-        </>
-      )}
-    </div>
-  );
-};
+    <div className="flex h-full bg-background p-6 gap-6">
+      {/* Chat Sidebar */}
+      <div 
+        className={cn(
+          "w-full bg-card/95 rounded-2xl shadow-lg",
+          "border-2 border-border/80 backdrop-blur-xl",
+          "bg-gradient-to-b from-background/50 to-background/30",
+          isMobile && currentConversation ? 'hidden' : 'block md:max-w-[400px]'
+        )}
+      >
+        <ChatSidebar />
+      </div>
 
-export default MessagesPage;
+      {/* Chat Window */}
+      <div 
+        className={cn(
+          "flex-1 bg-card/95 rounded-2xl shadow-lg",
+          "border-2 border-border/80 backdrop-blur-xl",
+          "bg-gradient-to-b from-background/50 to-background/30",
+          isMobile && !currentConversation ? 'hidden' : 'block'
+        )}
+      >
+        <ChatWindow />
+      </div>
+    </div>
+  )
+}
+
+export default function MessagesPage() {
+  return (
+    <ChatProvider>
+      <div className="h-[calc(100vh-4rem)]">
+        <MessagesContent />
+      </div>
+    </ChatProvider>
+  )
+} 

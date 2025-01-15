@@ -1,41 +1,102 @@
-import React, { useState, useEffect } from 'react'
-import Image from 'next/image'
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
-import { ChatMessage, ChatMessage as ChatMessageType } from '@/types/chats/types'
+import React from 'react'
+import { motion } from 'framer-motion'
+import { format } from 'date-fns'
+import { cn } from '@/lib/utils'
+import { Check, CheckCheck, Paperclip } from 'lucide-react'
+import type { ChatMessage as ChatMessageType } from '@/types/chats/types'
 
-const ChatMessageComponent: React.FC<{ message: ChatMessageType }> = ({ message }) => {
-  const [signedUrl, setSignedUrl] = useState<string | null>(null)
-  const supabase = createClientComponentClient()
+interface ChatMessageProps {
+  message: ChatMessageType
+  isCurrentUser: boolean
+  isFirstInGroup: boolean
+  isLastInGroup: boolean
+}
 
-  useEffect(() => {
-    if (message.file_path) {
-      const getSignedUrl = async () => {
-        const { data, error } = await supabase.storage
-          .from('chat-attachments')
-          .createSignedUrl(message.file_path!, 3600) // URL valid for 1 hour
+const MessageStatus = ({ status }: { status: string }) => {
+  switch (status) {
+    case 'sent':
+      return <Check className="h-3 w-3 text-white/70" />
+    case 'delivered':
+      return <CheckCheck className="h-3 w-3 text-white/70" />
+    case 'read':
+      return <CheckCheck className="h-3 w-3 text-white" />
+    default:
+      return null
+  }
+}
 
-        if (error) {
-          console.error('Error getting signed URL:', error)
-        } else if (data) {
-          setSignedUrl(data.signedUrl)
-        }
-      }
-
-      getSignedUrl()
-    }
-  }, [message.file_path, supabase])
-
+const ChatMessage: React.FC<ChatMessageProps> = ({ 
+  message, 
+  isCurrentUser,
+  isFirstInGroup,
+  isLastInGroup
+}) => {
   return (
-    <div className="message">
-      {message.content && <p>{message.content}</p>}
-      {message.file_type === 'image' && signedUrl && (
-        <Image src={signedUrl} alt="Attached image" width={200} height={200} />
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className={cn(
+        "group flex",
+        isCurrentUser ? "justify-end" : "justify-start",
+        !isLastInGroup ? "mb-1" : "mb-3"
       )}
-      {message.file_type === 'document' && signedUrl && (
-        <a href={signedUrl} target="_blank" rel="noopener noreferrer">View Document</a>
-      )}
-    </div>
+    >
+      <div className={cn(
+        "max-w-[70%] relative group",
+        isCurrentUser ? "ml-12" : "mr-12"
+      )}>
+        <div className={cn(
+          "rounded-2xl p-3 shadow-sm transition-all duration-300",
+          isCurrentUser 
+            ? "bg-brand-300 text-white hover:bg-brand-400" 
+            : "bg-white/80 text-brand-300 hover:bg-white dark:bg-background-light dark:hover:bg-background",
+          // Rounded corners based on message grouping
+          isCurrentUser ? (
+            cn(
+              isFirstInGroup ? "rounded-tr-2xl" : "rounded-tr-md",
+              isLastInGroup ? "rounded-br-2xl" : "rounded-br-md"
+            )
+          ) : (
+            cn(
+              isFirstInGroup ? "rounded-tl-2xl" : "rounded-tl-md",
+              isLastInGroup ? "rounded-bl-2xl" : "rounded-bl-md"
+            )
+          )
+        )}>
+          <div className="break-words">
+            {message.content}
+          </div>
+          {message.file_url && (
+            <a 
+              href={message.file_url}
+              target="_blank"
+              rel="noopener noreferrer" 
+              className={cn(
+                "mt-2 flex items-center gap-2 rounded-lg p-2 transition-colors",
+                isCurrentUser 
+                  ? "bg-brand-400/20 hover:bg-brand-400/30" 
+                  : "bg-background/50 hover:bg-background"
+              )}
+            >
+              <Paperclip className="h-4 w-4 shrink-0" />
+              <span className="text-sm truncate">
+                {message.file_url.split('/').pop()}
+              </span>
+            </a>
+          )}
+          <div className="flex items-center justify-end gap-1 mt-1 min-h-[16px]">
+            <span className={cn(
+              "text-[11px]",
+              isCurrentUser ? "text-white/70" : "text-brand-300/70"
+            )}>
+              {format(new Date(message.created_at), 'HH:mm')}
+            </span>
+            {isCurrentUser && <MessageStatus status={message.status} />}
+          </div>
+        </div>
+      </div>
+    </motion.div>
   )
 }
 
-export default ChatMessageComponent
+export default ChatMessage

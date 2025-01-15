@@ -1,11 +1,42 @@
-import { Database } from '@/lib/database.types'
+export interface Profile {
+  id: string
+  first_name: string
+  last_name: string
+  avatar_url?: string
+}
 
-export type Profile = Database['public']['Tables']['profiles']['Row']
-export type Conversation = Database['public']['Tables']['conversations']['Row'] & {
+export interface Product {
+  id: string
+  title: string
+  description: string
+  price: number
+  image_url?: string
+  seller_id: string
+}
+
+export interface Message {
+  id: string
+  conversation_id: string
+  sender_id: string
+  content: string
+  file_url?: string
+  created_at: string
+  status: 'sent' | 'delivered' | 'read'
+}
+
+export interface Conversation {
+  id: string
+  buyer_id: string
+  seller_id: string
+  product_id: string
+  created_at: string
+  updated_at: string
   buyer?: Profile
   seller?: Profile
+  product?: Product
+  last_message?: Message
+  unread_count?: number
 }
-export type Message = Database['public']['Tables']['messages']['Row']
 
 export interface ChatListItem extends Conversation {
   otherUser: Profile
@@ -15,7 +46,6 @@ export interface ChatListItem extends Conversation {
 
 export interface ChatMessage extends Message {
   sender: Profile
-  status: 'sent' | 'delivered' | 'read'
 }
 
 export type TypingUsers = Record<string, string[]>

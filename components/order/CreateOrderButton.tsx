@@ -12,11 +12,15 @@ import { OrderForm } from '@/components/order/OrderForm'
 
 interface CreateOrderButtonProps {
   sellerId: string
-  productId: string
+  productId?: string
   conversationId: string
 }
 
-export const CreateOrderButton = ({ sellerId, productId, conversationId }: CreateOrderButtonProps) => {
+export const CreateOrderButton: React.FC<CreateOrderButtonProps> = ({
+  sellerId,
+  productId,
+  conversationId
+}) => {
   const [showDialog, setShowDialog] = useState(false)
 
   return (
