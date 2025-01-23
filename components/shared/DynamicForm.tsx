@@ -7,6 +7,8 @@ import {
   FormField,
   FormItem,
   FormMessage,
+  FormLabel,
+  FormDescription,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -21,9 +23,8 @@ import {
   SelectLabel,
 } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { PhoneInput } from "@/components/shared/PhoneInput";
-import { DatePicker } from "@/components/shared/DatePicker";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 
@@ -49,14 +50,25 @@ export interface FormFieldOption {
 export interface FormField {
   name: string;
   label: string;
-  type: FieldType;
+  type: "text" | "email" | "password" | "phone" | "select" | "textarea" | "date" | "url" | "number";
   placeholder?: string;
   description?: string;
   required?: boolean;
-  options?: FormFieldOption[];
+  options?: { label: string; value: string; options?: { label: string; value: string; }[] }[];
+  rows?: number;
+  className?: string;
   min?: number;
   max?: number;
-  rows?: number;
+  calendarProps?: {
+    mode?: "single" | "multiple" | "range";
+    captionLayout?: "dropdown" | "dropdown-months" | "dropdown-years";
+    fromYear?: number;
+    toYear?: number;
+    defaultMonth?: Date;
+    showOutsideDays?: boolean;
+    fixedWeeks?: boolean;
+    classNames?: Record<string, string>;
+  };
 }
 
 interface DynamicFormProps {
@@ -66,6 +78,7 @@ interface DynamicFormProps {
   initialData?: any;
   submitText?: string;
   className?: string;
+  loading?: boolean;
 }
 
 export function DynamicForm({
@@ -74,31 +87,76 @@ export function DynamicForm({
   schema,
   initialData,
   submitText = "Save Changes",
-  className
+  className,
+  loading = false
 }: DynamicFormProps) {
-  const [isLoading, setIsLoading] = useState(false);
-  
   const form = useForm({
     resolver: zodResolver(schema),
     defaultValues: initialData || {},
+    mode: "onTouched"
   });
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const formState = form.formState;
+
+  // Debug logs for form state changes
+  useEffect(() => {
+    console.log('Form State:', {
+      isDirty: formState.isDirty,
+      isSubmitting: formState.isSubmitting,
+      isValid: formState.isValid,
+      errors: formState.errors,
+      submitCount: formState.submitCount,
+      isLoading: loading,
+      isLocalSubmitting: isSubmitting
+    });
+  }, [formState, loading, isSubmitting]);
+
   const handleSubmit = async (data: any) => {
+    if (isSubmitting || loading) {
+      console.log('Preventing duplicate submission');
+      return;
+    }
+
     try {
-      setIsLoading(true);
+      console.log('Starting form submission with data:', data);
+      setIsSubmitting(true);
+
       await onSubmit(data);
+      
+      // Only reset the form if submission was successful
+      console.log('Form submission successful');
       form.reset(data);
     } catch (error) {
       console.error('Form submission error:', error);
+      
+      if (error instanceof z.ZodError) {
+        error.errors.forEach((err) => {
+          const path = err.path.join('.');
+          console.log('Setting field error:', path, err.message);
+          form.setError(path, {
+            type: 'manual',
+            message: err.message,
+          });
+        });
+      } else {
+        // Set a generic form error
+        form.setError('root', {
+          type: 'manual',
+          message: 'An error occurred while saving. Please try again.',
+        });
+      }
     } finally {
-      setIsLoading(false);
+      console.log('Completing form submission');
+      setIsSubmitting(false);
     }
   };
 
   const renderFormControl = (field: FormField, formField: any) => {
+    const fieldError = form.formState.errors[field.name];
     const labelClass = cn(
       "text-[13px] font-medium text-brand-200/90 mb-1.5 block",
-      formField.error && "text-red-500"
+      fieldError && "text-red-500"
     );
     const inputClass = cn(
       "w-full px-3 py-2 bg-white/50 border border-brand-100/20",
@@ -106,8 +164,23 @@ export function DynamicForm({
       "focus:border-brand-200 focus:ring-1 focus:ring-brand-200/30",
       "placeholder:text-gray-400 text-[13px]",
       "disabled:opacity-50 disabled:cursor-not-allowed",
-      formField.error && "border-red-400 focus:border-red-400 focus:ring-red-400/20"
+      fieldError && "border-red-400 focus:border-red-400 focus:ring-red-400/20"
     );
+
+    const renderError = () => {
+      if (!fieldError) return null;
+      const errorMessage = fieldError && typeof fieldError === 'object' && 'message' in fieldError
+        ? String(fieldError.message)
+        : typeof fieldError === 'string'
+          ? fieldError
+          : "This field is required";
+            
+      return (
+        <p className="text-[11px] font-medium text-red-500 mt-1">
+          {errorMessage}
+        </p>
+      );
+    };
 
     switch (field.type) {
       case "textarea":
@@ -115,7 +188,7 @@ export function DynamicForm({
           <div className="space-y-1.5">
             <label className={labelClass}>
               {field.label}
-              {field.required && <span className="text-brand-300 ml-0.5 font-medium">*</span>}
+              {field.required && <span className="text-red-500 ml-0.5">*</span>}
             </label>
             <Textarea
               {...formField}
@@ -123,6 +196,7 @@ export function DynamicForm({
               className={cn(inputClass, "min-h-[90px] resize-none")}
               rows={field.rows || 4}
             />
+            {renderError()}
           </div>
         );
       case "select":
@@ -131,7 +205,7 @@ export function DynamicForm({
           <div className="space-y-1.5">
             <label className={labelClass}>
               {field.label}
-              {field.required && <span className="text-brand-300 ml-0.5 font-medium">*</span>}
+              {field.required && <span className="text-red-500 ml-0.5">*</span>}
             </label>
             <Select
               onValueChange={formField.onChange}
@@ -173,6 +247,7 @@ export function DynamicForm({
                 </div>
               </SelectContent>
             </Select>
+            {renderError()}
           </div>
         );
       case "phone":
@@ -180,7 +255,7 @@ export function DynamicForm({
           <div className="space-y-1.5">
             <label className={labelClass}>
               {field.label}
-              {field.required && <span className="text-brand-300 ml-0.5 font-medium">*</span>}
+              {field.required && <span className="text-red-500 ml-0.5">*</span>}
             </label>
             <div className={cn(inputClass, "!p-0 flex items-center overflow-hidden h-10")}>
               <PhoneInput
@@ -188,6 +263,7 @@ export function DynamicForm({
                 onChange={formField.onChange}
               />
             </div>
+            {renderError()}
           </div>
         );
       case "date":
@@ -195,14 +271,16 @@ export function DynamicForm({
           <div className="space-y-1.5">
             <label className={labelClass}>
               {field.label}
-              {field.required && <span className="text-brand-300 ml-0.5 font-medium">*</span>}
+              {field.required && <span className="text-red-500 ml-0.5">*</span>}
             </label>
-            <div className={cn(inputClass, "!p-0 h-10")}>
-              <DatePicker
-                value={formField.value}
-                onChange={formField.onChange}
-              />
-            </div>
+            <Input
+              type="date"
+              {...formField}
+              className={cn(inputClass, "h-10")}
+              min="1900-01-01"
+              max={new Date().toISOString().split('T')[0]}
+            />
+            {renderError()}
           </div>
         );
       default:
@@ -210,7 +288,7 @@ export function DynamicForm({
           <div className="space-y-1.5">
             <label className={labelClass}>
               {field.label}
-              {field.required && <span className="text-brand-300 ml-0.5 font-medium">*</span>}
+              {field.required && <span className="text-red-500 ml-0.5">*</span>}
             </label>
             <Input
               type={field.type}
@@ -220,6 +298,7 @@ export function DynamicForm({
               min={field.type === "number" ? field.min : undefined}
               max={field.type === "number" ? field.max : undefined}
             />
+            {renderError()}
           </div>
         );
     }
@@ -243,18 +322,20 @@ export function DynamicForm({
                   render={({ field: formField }) => (
                     <FormItem>
                       <FormControl>
-                        {renderFormControl(field, {
-                          ...formField,
-                          error: form.formState.errors[field.name]
-                        })}
+                        {renderFormControl(field, formField)}
                       </FormControl>
-                      <FormMessage className="mt-1 text-[11px] font-medium text-red-400" />
                     </FormItem>
                   )}
                 />
               </motion.div>
             ))}
           </div>
+
+          {form.formState.errors.root && (
+            <p className="text-sm font-medium text-red-500 text-center">
+              {form.formState.errors.root.message}
+            </p>
+          )}
 
           <motion.div
             initial={{ opacity: 0, y: 10 }}
@@ -268,9 +349,9 @@ export function DynamicForm({
                 "hover:bg-brand-300 transition-colors duration-200",
                 "disabled:opacity-50 disabled:cursor-not-allowed"
               )}
-              disabled={isLoading || !form.formState.isValid}
+              disabled={isSubmitting || loading}
             >
-              {isLoading ? (
+              {isSubmitting || loading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   <span>Saving changes...</span>

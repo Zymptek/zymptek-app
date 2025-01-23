@@ -26,7 +26,8 @@ import {
   Users,
   Star,
   Plus,
-  Eye
+  Eye,
+  User
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -36,9 +37,16 @@ import { Database } from '@/lib/database.types';
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { EditDialog } from "@/components/shared/EditDialog";
-import { ProfileSchema, profileFormFields, companyFormFields } from "@/lib/schema/profileSchema";
+import { ProfileSchema, CompanySchema, profileFormFields, companyFormFields } from "@/lib/schema/profileSchema";
 import { recordActivity } from "@/lib/schema/activitySchema";
 import { ImageEditDialog } from "@/components/shared/ImageEditDialog";
+import { useToast } from "@/hooks/use-toast";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const container = {
   hidden: { opacity: 0 },
@@ -141,10 +149,30 @@ export default function ProfilePage() {
   const [subcategories, setSubcategories] = useState<Array<{ id: string; name: string; category_id: string | null }>>([]);
   const supabase = createClientComponentClient<Database>();
   const router = useRouter();
+  const { toast } = useToast();
   const [editProfileOpen, setEditProfileOpen] = useState(false);
   const [editCompanyOpen, setEditCompanyOpen] = useState(false);
   const [editAvatarOpen, setEditAvatarOpen] = useState(false);
   const [editLogoOpen, setEditLogoOpen] = useState(false);
+  
+  // Get active tab from URL on client side
+  const [activeTab, setActiveTab] = useState('dashboard');
+  
+  useEffect(() => {
+    // Update active tab from URL on mount
+    const params = new URLSearchParams(window.location.search);
+    const tab = params.get('tab');
+    if (tab) {
+      setActiveTab(tab);
+    }
+  }, []);
+
+  // Update URL when tab changes
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    const newUrl = `${window.location.pathname}?tab=${value}`;
+    window.history.pushState({}, '', newUrl);
+  };
 
   // Transform categories and subcategories into grouped options format
   const categoryOptions = categories.map(cat => ({
@@ -243,13 +271,18 @@ export default function ProfilePage() {
       company_name: companyProfile?.company_name || "",
       company_address: companyProfile?.company_address || "",
       company_description: companyProfile?.company_description || "",
-      website: companyProfile?.website || "",
-      production_capacity: companyProfile?.production_capacity || "",
-      certifications: companyProfile?.certifications || "",
-      main_markets: companyProfile?.main_markets || "",
-      year_established: companyProfile?.year_established || "",
-      number_of_employees: companyProfile?.number_of_employees || "",
-      business_type: companyProfile?.business_type || "",
+      overview: {
+        mainProducts: companyProfile?.overview?.mainProducts || "",
+        totalEmployees: companyProfile?.overview?.totalEmployees?.toString() || "",
+        yearsExporting: companyProfile?.overview?.yearsExporting?.toString() || "",
+        yearEstablished: companyProfile?.overview?.yearEstablished || ""
+      },
+      productionCapacity: {
+        factorySize: companyProfile?.productionCapacity?.factorySize?.toString() || "",
+        annualOutput: companyProfile?.productionCapacity?.annualOutput?.toString() || "",
+        productionLines: companyProfile?.productionCapacity?.productionLines?.toString() || "",
+        qualityControlStaff: companyProfile?.productionCapacity?.qualityControlStaff?.toString() || ""
+      },
       social_media: {
         linkedin: companyProfile?.social_media?.linkedin || "",
         twitter: companyProfile?.social_media?.twitter || "",
@@ -258,31 +291,40 @@ export default function ProfilePage() {
     }
   };
 
+  const calculateConversionRate = (analytics: SellerAnalytics | null) => {
+    if (!analytics?.total_views || !analytics?.total_orders) return "0%";
+    return `${((analytics.total_orders / analytics.total_views) * 100).toFixed(1)}%`;
+  };
+
   const stats = [
     { 
       label: "Total Products", 
-      value: sellerAnalytics?.total_products.toString() || "0", 
-      icon: Store, 
-      change: null 
+      value: sellerAnalytics?.total_products?.toString() || "0", 
+      icon: Store,
+      tooltip: "Products in your catalog",
+      change: null
     },
     { 
       label: "Total Views", 
-      value: sellerAnalytics?.total_views.toString() || "0", 
-      icon: Eye, 
-      change: null 
+      value: sellerAnalytics?.total_views?.toString() || "0", 
+      icon: Eye,
+      tooltip: "Product page views",
+      change: null
     },
     { 
       label: "Total Orders", 
-      value: sellerAnalytics?.total_orders.toString() || "0", 
-      icon: ShoppingCart, 
-      change: null 
+      value: sellerAnalytics?.total_orders?.toString() || "0", 
+      icon: ShoppingCart,
+      tooltip: "Successful orders",
+      change: null
     },
     { 
       label: "Conversion Rate", 
-      value: `${sellerAnalytics?.overall_conversion_rate.toFixed(1) || "0"}%`, 
-      icon: TrendingUp, 
-      change: null 
-    },
+      value: calculateConversionRate(sellerAnalytics), 
+      icon: TrendingUp,
+      tooltip: "Views to orders ratio",
+      change: null
+    }
   ];
 
   const handleProfileUpdate = async (data: any) => {
@@ -334,34 +376,44 @@ export default function ProfilePage() {
 
   const handleCompanyUpdate = async (data: any) => {
     try {
-      // Check if any field has actually changed
-      const hasChanges = Object.keys(data).some(key => {
-        if (key === 'social_media') {
-          return Object.keys(data.social_media).some(
-            socialKey => data.social_media[socialKey] !== companyProfile?.[socialKey as keyof typeof companyProfile]
-          );
+      setLoading(true);
+      
+      // Extract company_profile data and merge with existing profile
+      const updatedProfile = {
+        company_name: data.company_profile.company_name,
+        company_address: data.company_profile.company_address,
+        company_description: data.company_profile.company_description,
+        company_logo_url: companyProfile?.company_logo_url,
+        company_poster_url: companyProfile?.company_poster_url,
+        overview: {
+          mainProducts: data.company_profile.overview?.mainProducts,
+          totalEmployees: Number(data.company_profile.overview?.totalEmployees),
+          yearsExporting: Number(data.company_profile.overview?.yearsExporting),
+          yearEstablished: data.company_profile.overview?.yearEstablished
+        },
+        productionCapacity: {
+          factorySize: Number(data.company_profile.productionCapacity?.factorySize),
+          annualOutput: Number(data.company_profile.productionCapacity?.annualOutput),
+          productionLines: Number(data.company_profile.productionCapacity?.productionLines),
+          qualityControlStaff: Number(data.company_profile.productionCapacity?.qualityControlStaff)
+        },
+        social_media: {
+          linkedin: data.company_profile.social_media?.linkedin || '',
+          twitter: data.company_profile.social_media?.twitter || '',
+          facebook: data.company_profile.social_media?.facebook || ''
         }
-        return data[key] !== companyProfile?.[key as keyof typeof companyProfile];
-      });
-
-      if (!hasChanges) {
-        setEditCompanyOpen(false);
-        return;
-      }
+      };
 
       const { error } = await supabase
         .from('profiles')
         .update({
-          company_profile: {
-            ...companyProfile,
-            ...data
-          }
+          company_profile: updatedProfile
         })
         .eq('id', profile.id);
 
       if (error) throw error;
 
-      // Record activity only if changes were made
+      // Record activity
       await recordActivity({
         user_id: user.id,
         activity_type: 'COMPANY_UPDATE',
@@ -369,21 +421,19 @@ export default function ProfilePage() {
         entity_id: profile.id,
         description: 'Updated company information',
         metadata: {
-          updated_fields: Object.keys(data).filter(key => {
-            if (key === 'social_media') {
-              return Object.keys(data.social_media).some(
-                socialKey => data.social_media[socialKey] !== companyProfile?.[socialKey as keyof typeof companyProfile]
-              );
-            }
-            return data[key] !== companyProfile?.[key as keyof typeof companyProfile];
-          })
+          updated_fields: Object.keys(data.company_profile)
         }
       });
 
+      // Close dialog and refresh page with company tab active
       setEditCompanyOpen(false);
-      window.location.reload();
+      window.location.href = window.location.pathname + '?tab=company';
     } catch (error) {
       console.error('Error updating company profile:', error);
+      // Re-throw error to be handled by the form
+      throw error;
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -398,7 +448,7 @@ export default function ProfilePage() {
         .from('profiles')
         .update({ avatar_url: imageUrl })
         .eq('user_id', user.id);
-      
+
       if (profileError) throw profileError;
 
       // Record activity
@@ -454,12 +504,12 @@ export default function ProfilePage() {
     }
   };
 
-  return (
+    return (
     <div className="min-h-screen bg-gradient-to-b from-background to-background/80">
       <div className="container max-w-7xl mx-auto py-10 px-4">
         <div className="flex gap-8">
           {/* Fixed Profile Section - Left Side */}
-          <motion.div 
+                <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             className="w-1/4 shrink-0 space-y-6"
@@ -586,7 +636,7 @@ export default function ProfilePage() {
             animate={{ opacity: 1, x: 0 }}
             className="flex-1"
           >
-            <Tabs defaultValue="dashboard" className="space-y-8">
+            <Tabs defaultValue={activeTab} onValueChange={handleTabChange} className="space-y-8">
               <TabsList className="inline-flex h-14 items-center justify-start rounded-xl bg-brand-100/10 p-1 text-muted-foreground w-full">
                 <TabsTrigger 
                   value="dashboard"
@@ -602,21 +652,23 @@ export default function ProfilePage() {
                   <Package className="h-4 w-4 mr-2" />
                   Orders
                 </TabsTrigger>
-                <TabsTrigger 
-                  value="products"
-                  className="inline-flex items-center justify-center whitespace-nowrap rounded-lg px-5 py-3 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-white data-[state=active]:text-brand-200 data-[state=active]:shadow-sm h-11"
-                >
-                  <Store className="h-4 w-4 mr-2" />
-                  Products
-                </TabsTrigger>
                 {profile.user_type === "SELLER" && (
-                  <TabsTrigger 
-                    value="company"
-                    className="inline-flex items-center justify-center whitespace-nowrap rounded-lg px-5 py-3 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-white data-[state=active]:text-brand-200 data-[state=active]:shadow-sm h-11"
-                  >
-                    <Building2 className="h-4 w-4 mr-2" />
-                    Company
-                  </TabsTrigger>
+                  <>
+                    <TabsTrigger 
+                      value="products"
+                      className="inline-flex items-center justify-center whitespace-nowrap rounded-lg px-5 py-3 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-white data-[state=active]:text-brand-200 data-[state=active]:shadow-sm h-11"
+                    >
+                      <Store className="h-4 w-4 mr-2" />
+                      Products
+                    </TabsTrigger>
+                    <TabsTrigger 
+                      value="company"
+                      className="inline-flex items-center justify-center whitespace-nowrap rounded-lg px-5 py-3 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-white data-[state=active]:text-brand-200 data-[state=active]:shadow-sm h-11"
+                    >
+                      <Building2 className="h-4 w-4 mr-2" />
+                      Company
+                    </TabsTrigger>
+                  </>
                 )}
               </TabsList>
 
@@ -627,214 +679,376 @@ export default function ProfilePage() {
                   animate="show"
                   className="space-y-6"
                 >
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    {stats.map((stat, index) => (
-                      <motion.div key={stat.label} variants={item}>
-                        <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-brand-100/10">
-                          <CardContent className="p-6">
-                            <div className="flex items-center justify-between">
-                              <stat.icon className="h-8 w-8 text-brand-200" />
-                              <Badge variant="secondary" className="bg-brand-100/10">
-                                {stat.change}
-                              </Badge>
+                  {profile.user_type === "SELLER" ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                      {stats.map((stat, index) => (
+                        <TooltipProvider key={stat.label} delayDuration={300}>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <motion.div variants={item}>
+                                <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-brand-100/10">
+                                  <CardContent className="p-6">
+                                    <div className="flex items-center justify-between">
+                                      <stat.icon className="h-8 w-8 text-brand-200" />
+                                      <Badge variant="secondary" className="bg-brand-100/10">
+                                        {stat.change}
+                                      </Badge>
+                                    </div>
+                                    <div className="mt-4">
+                                      <h3 className="text-2xl font-bold">{stat.value}</h3>
+                                      <p className="text-sm text-muted-foreground">{stat.label}</p>
+                                    </div>
+                                  </CardContent>
+                                </Card>
+                              </motion.div>
+                            </TooltipTrigger>
+                            <TooltipContent 
+                              side="top" 
+                              align="center"
+                              className="bg-white/95 backdrop-blur-sm border border-brand-100/20 text-brand-800 text-xs"
+                            >
+                              {stat.tooltip}
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="space-y-6">
+                      {/* Buyer Dashboard */}
+                      <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-brand-100/10">
+                        <CardHeader className="border-b border-brand-100/20 pb-4">
+                          <CardTitle className="text-xl text-brand-200">Account Overview</CardTitle>
+                          <CardDescription>Your buyer account status and activity</CardDescription>
+                        </CardHeader>
+                        <CardContent className="pt-6">
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <Card className="border border-brand-100/20">
+                              <CardContent className="p-6">
+                                <div className="flex items-center space-x-4">
+                                  <div className="p-3 rounded-full bg-brand-100/10">
+                                    <Package className="h-6 w-6 text-brand-200" />
+                                  </div>
+                                  <div>
+                                    <p className="text-sm text-muted-foreground">Total Orders</p>
+                                    <h3 className="text-2xl font-bold">0</h3>
+                                  </div>
+                                </div>
+                              </CardContent>
+                            </Card>
+                            <Card className="border border-brand-100/20">
+                              <CardContent className="p-6">
+                                <div className="flex items-center space-x-4">
+                                  <div className="p-3 rounded-full bg-brand-100/10">
+                                    <Clock className="h-6 w-6 text-brand-200" />
+                                  </div>
+                                  <div>
+                                    <p className="text-sm text-muted-foreground">Active Orders</p>
+                                    <h3 className="text-2xl font-bold">0</h3>
+                                  </div>
+                                </div>
+                              </CardContent>
+                            </Card>
+                            <Card className="border border-brand-100/20">
+                              <CardContent className="p-6">
+                                <div className="flex items-center space-x-4">
+                                  <div className="p-3 rounded-full bg-brand-100/10">
+                                    <Star className="h-6 w-6 text-brand-200" />
+                                  </div>
+                                  <div>
+                                    <p className="text-sm text-muted-foreground">Reviews Given</p>
+                                    <h3 className="text-2xl font-bold">0</h3>
+                                  </div>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      {/* Become a Seller Card */}
+                      <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-brand-100/10">
+                        <CardContent className="p-6">
+                          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+                            <div className="space-y-2">
+                              <h3 className="text-xl font-semibold text-brand-200">Become a Seller</h3>
+                              <p className="text-muted-foreground">Start selling your products and reach customers worldwide</p>
                             </div>
-                            <div className="mt-4">
-                              <h3 className="text-2xl font-bold">{stat.value}</h3>
-                              <p className="text-sm text-muted-foreground">{stat.label}</p>
+                            <Button 
+                              className="bg-brand-200 hover:bg-brand-300 text-white"
+                              onClick={() => router.push('/become-seller')}
+                            >
+                              <Store className="h-4 w-4 mr-2" />
+                              Convert to Seller Account
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      {/* Recent Activity */}
+                      <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-brand-100/10">
+                        <CardHeader className="border-b border-brand-100/20 pb-4">
+                          <CardTitle className="text-xl text-brand-200">Recent Activity</CardTitle>
+                          <CardDescription>Your latest interactions and updates</CardDescription>
+                        </CardHeader>
+                        <CardContent className="pt-6">
+                          <div className="space-y-6">
+                            <div className="flex items-center gap-4">
+                              <div className="p-2 rounded-full bg-brand-100/10">
+                                <User className="h-4 w-4 text-brand-200" />
+                              </div>
+                              <div>
+                                <p className="text-sm font-medium">Account Created</p>
+                                <p className="text-xs text-muted-foreground">
+                                  {new Date(profile.created_at).toLocaleDateString()}
+                                </p>
+                              </div>
                             </div>
-                          </CardContent>
-                        </Card>
-                      </motion.div>
-                    ))}
-                  </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  )}
                 </motion.div>
               </TabsContent>
 
               <TabsContent value="orders">
                 <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-brand-100/10">
                   <CardHeader className="border-b border-brand-100/20 pb-4">
-                    <CardTitle className="text-xl text-brand-200">Orders</CardTitle>
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <CardTitle className="text-xl text-brand-200">Orders</CardTitle>
+                        <CardDescription>Track and manage your orders</CardDescription>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button variant="outline" size="sm" className="text-brand-200 border-brand-200">
+                          <Clock className="h-4 w-4 mr-2" />
+                          Active
+                        </Button>
+                        <Button variant="outline" size="sm" className="text-muted-foreground">
+                          <Package className="h-4 w-4 mr-2" />
+                          Completed
+                        </Button>
+                      </div>
+                    </div>
                   </CardHeader>
                   <CardContent className="pt-6">
-                <motion.div
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="text-center py-12"
-                    >
-                      <Package className="h-12 w-12 mx-auto text-brand-200 mb-4" />
-                      <p className="text-muted-foreground">Your orders will appear here.</p>
-                    </motion.div>
+                    {profile.user_type === "BUYER" ? (
+                      <div className="space-y-6">
+                        {/* Order Tracking Section */}
+                        <div className="rounded-lg border border-brand-100/20 overflow-hidden">
+                          <div className="p-4 bg-brand-100/5">
+                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                              <div className="space-y-1">
+                                <p className="text-sm text-muted-foreground">No active orders</p>
+                                <p className="text-xs text-muted-foreground">Start shopping to see your orders here</p>
+                              </div>
+                              <Button 
+                                className="bg-brand-200 hover:bg-brand-300 text-white"
+                                onClick={() => router.push('/products')}
+                              >
+                                <ShoppingCart className="h-4 w-4 mr-2" />
+                                Browse Products
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Order History */}
+                        <div className="space-y-4">
+                          <h3 className="text-lg font-semibold text-brand-200">Order History</h3>
+                          <div className="text-center py-8">
+                            <Package className="h-12 w-12 mx-auto text-brand-200 mb-4" />
+                            <p className="text-muted-foreground">You haven't placed any orders yet</p>
+                            <p className="text-sm text-muted-foreground mt-2">
+                              Your order history will appear here once you start making purchases
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="text-center py-12"
+                      >
+                        <Package className="h-12 w-12 mx-auto text-brand-200 mb-4" />
+                        <p className="text-muted-foreground">Your orders will appear here.</p>
+                      </motion.div>
+                    )}
                   </CardContent>
                 </Card>
               </TabsContent>
 
-              <TabsContent value="products">
-                <motion.div
-                  variants={container}
-                  initial="hidden"
-                  animate="show"
-                  className="space-y-6"
-                >
-                  {/* Product Analytics Section */}
-                  <motion.div 
-                    variants={stagger}
-                    className="grid grid-cols-1 md:grid-cols-3 gap-6"
+              {profile.user_type === "SELLER" && (
+                <TabsContent value="products">
+                  <motion.div
+                    variants={container}
+                    initial="hidden"
+                    animate="show"
+                    className="space-y-6"
                   >
-                    <motion.div variants={slideUp}>
-                      <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-brand-100/10">
-                        <CardContent className="p-6">
-                          <div className="flex items-center justify-between">
-                            <div className="space-y-1">
-                              <p className="text-sm text-muted-foreground">Total Products</p>
-                              <p className="text-2xl font-bold">{sellerAnalytics?.total_products || 0}</p>
+                    {/* Product Analytics Section */}
+                      <motion.div
+                      variants={stagger}
+                      className="grid grid-cols-1 md:grid-cols-3 gap-6"
+                    >
+                      <motion.div variants={slideUp}>
+                        <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-brand-100/10">
+                          <CardContent className="p-6">
+                            <div className="flex items-center justify-between">
+                              <div className="space-y-1">
+                                <p className="text-sm text-muted-foreground">Total Products</p>
+                                <p className="text-2xl font-bold">{sellerAnalytics?.total_products || 0}</p>
+                              </div>
+                              <Store className="h-8 w-8 text-brand-200" />
                             </div>
-                            <Store className="h-8 w-8 text-brand-200" />
-                          </div>
-                        </CardContent>
-                      </Card>
+                          </CardContent>
+                        </Card>
+                      </motion.div>
+
+                      <motion.div variants={slideUp}>
+                        <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-brand-100/10">
+                          <CardContent className="p-6">
+                            <div className="flex items-center justify-between">
+                              <div className="space-y-1">
+                                <p className="text-sm text-muted-foreground">Total Views</p>
+                                <p className="text-2xl font-bold">{sellerAnalytics?.total_views || 0}</p>
+                              </div>
+                              <div className="bg-brand-100/10 p-2 rounded-full">
+                                <Eye className="h-8 w-8 text-brand-200" />
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </motion.div>
+
+                      <motion.div variants={slideUp}>
+                        <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-brand-100/10">
+                          <CardContent className="p-6">
+                            <div className="flex items-center justify-between">
+                              <div className="space-y-1">
+                                <p className="text-sm text-muted-foreground">Conversion Rate</p>
+                                <p className="text-2xl font-bold">{sellerAnalytics?.overall_conversion_rate.toFixed(1) || 0}%</p>
+                              </div>
+                              <div className="bg-brand-100/10 p-2 rounded-full">
+                                <TrendingUp className="h-8 w-8 text-brand-200" />
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </motion.div>
                     </motion.div>
 
-                    <motion.div variants={slideUp}>
+                    {/* Products List Section */}
+                    <motion.div variants={fadeIn}>
                       <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-brand-100/10">
-                        <CardContent className="p-6">
-                          <div className="flex items-center justify-between">
-                            <div className="space-y-1">
-                              <p className="text-sm text-muted-foreground">Total Views</p>
-                              <p className="text-2xl font-bold">{sellerAnalytics?.total_views || 0}</p>
+                        <CardHeader className="border-b border-brand-100/20 pb-4">
+                          <div className="flex justify-between items-center">
+                            <div>
+                              <CardTitle className="text-xl text-brand-200">Your Products</CardTitle>
+                              <CardDescription>Manage and monitor your product listings</CardDescription>
                             </div>
-                            <div className="bg-brand-100/10 p-2 rounded-full">
-                              <Eye className="h-8 w-8 text-brand-200" />
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </motion.div>
-
-                    <motion.div variants={slideUp}>
-                      <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-brand-100/10">
-                        <CardContent className="p-6">
-                          <div className="flex items-center justify-between">
-                            <div className="space-y-1">
-                              <p className="text-sm text-muted-foreground">Conversion Rate</p>
-                              <p className="text-2xl font-bold">{sellerAnalytics?.overall_conversion_rate.toFixed(1) || 0}%</p>
-                            </div>
-                            <div className="bg-brand-100/10 p-2 rounded-full">
-                              <TrendingUp className="h-8 w-8 text-brand-200" />
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </motion.div>
-                  </motion.div>
-
-                  {/* Products List Section */}
-                  <motion.div variants={fadeIn}>
-                    <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-brand-100/10">
-                      <CardHeader className="border-b border-brand-100/20 pb-4">
-                        <div className="flex justify-between items-center">
-                          <div>
-                            <CardTitle className="text-xl text-brand-200">Your Products</CardTitle>
-                            <CardDescription>Manage and monitor your product listings</CardDescription>
-                          </div>
-                          <Button 
-                            className="bg-brand-200 hover:bg-brand-300 text-white"
-                            onClick={() => router.push(`/create-product/${user.id}`)}
-                          >
-                            <Plus className="h-4 w-4 mr-2" />
-                            Add Product
-                          </Button>
-                        </div>
-                      </CardHeader>
-                      <CardContent className="pt-6">
-                        {loading ? (
-                          <motion.div 
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            className="flex justify-center items-center py-12"
-                          >
-                            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-brand-200"></div>
-                          </motion.div>
-                        ) : products.length > 0 ? (
-                          <motion.div 
-                            variants={stagger}
-                            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-                          >
-                            {products.map((product) => (
-                              <motion.div 
-                                key={product.product_id}
-                                variants={slideUp}
-                                whileHover={{ scale: 1.02 }}
-                                transition={{ type: "spring", stiffness: 300 }}
-                              >
-                                <Card className="overflow-hidden border border-brand-100/20 hover:border-brand-200/30 transition-colors cursor-pointer"
-                                  onClick={() => router.push(`/products/${product.product_id}`)}
-                                >
-                                  <div className="aspect-square relative bg-gradient-to-br from-brand-100/20 to-brand-200/10">
-                                    {product.image_urls?.[0] ? (
-                                      <img 
-                                        src={product.image_urls[0]} 
-                                        alt={product.headline} 
-                                        className="absolute inset-0 w-full h-full object-cover"
-                                        onError={(e) => {
-                                          const target = e.target as HTMLImageElement;
-                                          target.style.display = 'none';
-                                          target.parentElement?.querySelector('.fallback')?.classList.remove('hidden');
-                                        }}
-                                      />
-                                    ) : null}
-                                    <div className={`fallback absolute inset-0 flex flex-col items-center justify-center text-brand-200 bg-gradient-to-br from-brand-100/20 to-brand-200/10 ${product.image_urls?.[0] ? 'hidden' : ''}`}>
-                                      <Package className="h-12 w-12 mb-2" />
-                                      <span className="text-sm text-brand-200/70">No image available</span>
-                                    </div>
-                                  </div>
-                                  <CardContent className="p-4">
-                                    <div className="space-y-2">
-                                      <div className="flex items-center justify-between">
-                                        <h3 className="font-medium truncate">{product.headline}</h3>
-                                        <Badge variant="secondary" className="bg-brand-100/10">
-                                          {product.status || 'Active'}
-                                        </Badge>
-                                      </div>
-                                      <p className="text-sm text-muted-foreground truncate">
-                                        {product.description}
-                                      </p>
-                                      <div className="flex items-center justify-between pt-2">
-                                        <p className="font-medium text-brand-200">
-                                          ${product.pricing?.[0]?.price || '-'}
-                                        </p>
-                                        <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-                                          <Eye className="h-4 w-4" />
-                                          <span>{product.views_count || 0}</span>
-                                        </div>
-                                      </div>
-                                    </div>
-                                  </CardContent>
-                                </Card>
-                              </motion.div>
-                            ))}
-                          </motion.div>
-                        ) : (
-                          <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="text-center py-12"
-                          >
-                            <Package className="h-12 w-12 mx-auto text-brand-200 mb-4" />
-                            <p className="text-muted-foreground">You haven't added any products yet.</p>
                             <Button 
-                              className="mt-4 bg-brand-200 hover:bg-brand-300 text-white"
-                              onClick={() => router.push('/create-product')}
+                              className="bg-brand-200 hover:bg-brand-300 text-white"
+                              onClick={() => router.push(`/create-product/${user.id}`)}
                             >
                               <Plus className="h-4 w-4 mr-2" />
-                              Add Your First Product
+                              Add Product
                             </Button>
-                          </motion.div>
-                        )}
-                      </CardContent>
-                    </Card>
+                          </div>
+                        </CardHeader>
+                        <CardContent className="pt-6">
+                          {loading ? (
+                            <motion.div 
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              className="flex justify-center items-center py-12"
+                            >
+                              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-brand-200"></div>
+                            </motion.div>
+                          ) : products.length > 0 ? (
+                            <motion.div 
+                              variants={stagger}
+                              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+                            >
+                              {products.map((product) => (
+                                <motion.div 
+                                  key={product.product_id}
+                                  variants={slideUp}
+                                  whileHover={{ scale: 1.02 }}
+                                  transition={{ type: "spring", stiffness: 300 }}
+                                >
+                                  <Card className="overflow-hidden border border-brand-100/20 hover:border-brand-200/30 transition-colors cursor-pointer"
+                                    onClick={() => router.push(`/products/${product.product_id}`)}
+                                  >
+                                    <div className="aspect-square relative bg-gradient-to-br from-brand-100/20 to-brand-200/10">
+                                      {product.image_urls?.[0] ? (
+                                        <img 
+                                          src={product.image_urls[0]} 
+                                          alt={product.headline} 
+                                          className="absolute inset-0 w-full h-full object-cover"
+                                          onError={(e) => {
+                                            const target = e.target as HTMLImageElement;
+                                            target.style.display = 'none';
+                                            target.parentElement?.querySelector('.fallback')?.classList.remove('hidden');
+                                          }}
+                                        />
+                                      ) : null}
+                                      <div className={`fallback absolute inset-0 flex flex-col items-center justify-center text-brand-200 bg-gradient-to-br from-brand-100/20 to-brand-200/10 ${product.image_urls?.[0] ? 'hidden' : ''}`}>
+                                        <Package className="h-12 w-12 mb-2" />
+                                        <span className="text-sm text-brand-200/70">No image available</span>
+                                      </div>
+                                    </div>
+                                    <CardContent className="p-4">
+                                      <div className="space-y-2">
+                                        <div className="flex items-center justify-between">
+                                          <h3 className="font-medium truncate">{product.headline}</h3>
+                                          <Badge variant="secondary" className="bg-brand-100/10">
+                                            {product.status || 'Active'}
+                                          </Badge>
+                                        </div>
+                                        <p className="text-sm text-muted-foreground truncate">
+                                          {product.description}
+                                        </p>
+                                        <div className="flex items-center justify-between pt-2">
+                                          <p className="font-medium text-brand-200">
+                                            ${product.pricing?.[0]?.price || '-'}
+                                          </p>
+                                          <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+                                            <Eye className="h-4 w-4" />
+                                            <span>{product.views_count || 0}</span>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </CardContent>
+                                  </Card>
+                                </motion.div>
+                              ))}
+                            </motion.div>
+                          ) : (
+                            <motion.div
+                              initial={{ opacity: 0, y: 20 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              className="text-center py-12"
+                            >
+                              <Package className="h-12 w-12 mx-auto text-brand-200 mb-4" />
+                              <p className="text-muted-foreground">You haven't added any products yet.</p>
+                              <Button
+                                className="mt-4 bg-brand-200 hover:bg-brand-300 text-white"
+                                onClick={() => router.push('/create-product')}
+                              >
+                                <Plus className="h-4 w-4 mr-2" />
+                                Add Your First Product
+                              </Button>
+                            </motion.div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    </motion.div>
                   </motion.div>
-                </motion.div>
-              </TabsContent>
+                </TabsContent>
+              )}
 
               {profile.user_type === "SELLER" && (
                 <TabsContent value="company">
@@ -853,7 +1067,7 @@ export default function ProfilePage() {
                               <CardTitle className="text-xl text-brand-200">Company Identity</CardTitle>
                               <CardDescription>Your company's brand and visual identity</CardDescription>
                             </div>
-                            <Button 
+                            <Button
                               variant="outline" 
                               className="text-brand-200 border-brand-200 hover:bg-brand-100/10"
                               onClick={() => setEditCompanyOpen(true)}
@@ -1114,9 +1328,10 @@ export default function ProfilePage() {
         title="Edit Company Details"
         description="Update your company information"
         fields={companyFormFields}
-        schema={ProfileSchema}
+        schema={CompanySchema}
         onSubmit={handleCompanyUpdate}
         initialData={transformedCompanyData}
+        loading={loading}
       />
 
       <ImageEditDialog

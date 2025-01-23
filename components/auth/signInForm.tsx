@@ -70,7 +70,7 @@ const SignInForm = () => {
             <FormItem>
               <FormControl>
                 <div className="relative">
-                  <Input {...field} type="email" placeholder="Email" className="pl-10 bg-background-light dark:bg-background-dark border-border-light dark:border-border-dark" />
+                  <Input {...field} type="email" placeholder="Email" className="pl-10 bg-background-light border-border-light" />
                   <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
                 </div>
               </FormControl>
@@ -89,7 +89,7 @@ const SignInForm = () => {
                     {...field}
                     type={showPassword ? "text" : "password"}
                     placeholder="Password"
-                    className="pl-10 pr-10 bg-background-light dark:bg-background-dark border-border-light dark:border-border-dark"
+                    className="pl-10 pr-10 bg-background-light border-border-light"
                   />
                   <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
                   <button

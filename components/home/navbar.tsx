@@ -195,22 +195,14 @@ const Navbar = () => {
               ) : (
                 <>
                 <Link href="/sign-in" passHref>
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    className="px-4 py-2 rounded-xl btn-primary text-white font-medium"
-                  >
+                  <button className="p-2 rounded-xl bg-brand-300 hover:bg-brand-400 text-white font-medium">
                     Sign In
-                  </motion.button>
+                  </button>
                   </Link>
                   <Link href="/sign-up" passHref>
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    className="px-4 py-2 rounded-xl btn-outline font-medium"
-                  >
+                  <button className="p-2 rounded-xl border border-brand-300 text-brand-300 hover:bg-brand-50 font-medium">
                     Sign Up
-                  </motion.button>
+                  </button>
                   </Link>
                 </>
               )}
@@ -233,7 +225,7 @@ const Navbar = () => {
                   value={searchType}
                   onValueChange={setSearchType}
                 >
-                  <SelectTrigger className="w-[140px] rounded-l-xl rounded-r-none bg-brand-500 border border-gray-300">
+                  <SelectTrigger className="w-[140px] rounded-l-xl rounded-r-none bg-white border border-gray-300">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -244,7 +236,7 @@ const Navbar = () => {
                 <input
                   type="text"
                   placeholder={`Search ${searchType}...`}
-                  className="flex-grow py-1 px-4 rounded-r-xl bg-brand-500 border border-gray-300 text-gray-700"
+                  className="flex-grow py-1 px-4 rounded-r-xl bg-white border border-gray-300 text-gray-700"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
@@ -267,12 +259,12 @@ const Navbar = () => {
                 ) : (
                   <>
                   <Link href="/sign-in" passHref>
-                    <button className="p-2 rounded-xl .btn-primary text-white font-medium">
+                    <button className="p-2 rounded-xl bg-brand-300 hover:bg-brand-400 text-white font-medium">
                       Sign In
                     </button>
                     </Link>
                     <Link href="/sign-up" passHref>
-                    <button className="p-2 rounded-xl .btn-outline font-medium">
+                    <button className="p-2 rounded-xl border border-brand-300 text-brand-300 hover:bg-brand-50 font-medium">
                       Sign Up
                     </button>
                     </Link>

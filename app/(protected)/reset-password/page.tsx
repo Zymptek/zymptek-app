@@ -81,8 +81,8 @@ const ResetPasswordPage = () => {
     <div className="w-full flex items-top justify-center">
       <Card className="w-full max-w-md shadow-xl">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-3xl font-bold text-center text-brand-300 dark:text-brand-100">Reset Password</CardTitle>
-          <CardDescription className="text-center text-brand-300 dark:text-brand-200">Enter your new password</CardDescription>
+          <CardTitle className="text-3xl font-bold text-center text-brand-300">Reset Password</CardTitle>
+          <CardDescription className="text-center text-brand-300">Enter your new password</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <Form {...form}>
@@ -100,8 +100,8 @@ const ResetPasswordPage = () => {
                           {...field}
                           id="password"
                           type={showPassword ? "text" : "password"}
-                          placeholder="New Password"
-                          className="pl-10 pr-10 bg-background-light dark:bg-background-dark border-border-light dark:border-border-dark"
+                          placeholder="Password"
+                          className="pl-10 pr-10 bg-background-light border-border-light"
                         />
                         <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
                         <button
@@ -132,8 +132,8 @@ const ResetPasswordPage = () => {
                           {...field}
                           id="confirmPassword"
                           type={showConfirmPassword ? "text" : "password"}
-                          placeholder="Confirm New Password"
-                          className="pl-10 pr-10 bg-background-light dark:bg-background-dark border-border-light dark:border-border-dark"
+                          placeholder="Confirm Password"
+                          className="pl-10 pr-10 bg-background-light border-border-light"
                         />
                         <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
                         <button
@@ -163,10 +163,12 @@ const ResetPasswordPage = () => {
         </CardContent>
         <CardFooter className="flex flex-col space-y-4">
           <div className="text-sm text-center">
-            Remember your password?{' '}
-            <Link href="/sign-in" className="font-semibold text-brand-300 hover:text-brand-400 dark:text-brand-100 dark:hover:text-brand-200">
-              Sign in
-            </Link>
+            <div>
+              Back to{' '}
+              <Link href="/sign-in" className="font-semibold text-brand-300 hover:text-brand-400">
+                Sign In
+              </Link>
+            </div>
           </div>
         </CardFooter>
       </Card>

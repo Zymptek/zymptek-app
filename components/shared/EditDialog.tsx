@@ -20,6 +20,7 @@ interface EditDialogProps {
   schema: z.ZodSchema<any>;
   initialData?: any;
   submitText?: string;
+  loading?: boolean;
 }
 
 export function EditDialog({
@@ -31,7 +32,8 @@ export function EditDialog({
   schema,
   onSubmit,
   initialData,
-  submitText = "Save changes"
+  submitText = "Save changes",
+  loading = false
 }: EditDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -49,6 +51,7 @@ export function EditDialog({
               initialData={initialData}
               submitText={submitText}
               className="space-y-4 [&_.select-content]:!z-[100] [&_.combobox-content]:!z-[100] [&_.calendar]:!z-[100]"
+              loading={loading}
             />
           </div>
         </ScrollArea>
