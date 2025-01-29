@@ -1,16 +1,25 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Upload, Check } from "lucide-react";
+import { Upload } from "lucide-react";
 import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 
-interface FileUploadProps {
+export interface FileUploadProps {
   onUpload: (file: File) => Promise<void>;
-  uploaded?: boolean;
+  maxSizeMB?: number;
+  acceptedFileTypes?: string[];
+  className?: string;
 }
 
-export function FileUpload({ onUpload, uploaded = false }: FileUploadProps) {
+export function FileUpload({ 
+  onUpload, 
+  maxSizeMB = 5, 
+  acceptedFileTypes = ['.pdf'], 
+  className 
+}: FileUploadProps) {
   const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -18,45 +27,70 @@ export function FileUpload({ onUpload, uploaded = false }: FileUploadProps) {
 
     try {
       setLoading(true);
+
+      // Validate file size
+      const fileSizeInMB = file.size / (1024 * 1024);
+      if (fileSizeInMB > maxSizeMB) {
+        toast({
+          title: "File too large",
+          description: `File size must be less than ${maxSizeMB}MB`,
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Validate file type
+      const fileExtension = '.' + file.name.split('.').pop()?.toLowerCase();
+      if (!acceptedFileTypes.includes(fileExtension)) {
+        toast({
+          title: "Invalid file type",
+          description: `File must be one of: ${acceptedFileTypes.join(', ')}`,
+          variant: "destructive"
+        });
+        return;
+      }
+
       await onUpload(file);
     } catch (error) {
       console.error('Error uploading file:', error);
+      toast({
+        title: "Error",
+        description: "Failed to upload file. Please try again.",
+        variant: "destructive"
+      });
     } finally {
       setLoading(false);
+      // Clear the input
+      e.target.value = '';
     }
   };
 
   return (
-    <div>
-      {uploaded ? (
-        <Button variant="outline" className="w-[100px] bg-green-50" disabled>
-          <Check className="w-4 h-4 text-green-500" />
-          <span className="ml-2">Done</span>
-        </Button>
-      ) : (
-        <Button
-          variant="outline"
-          className="w-[100px]"
-          disabled={loading}
-          onClick={() => document.getElementById('fileInput')?.click()}
-        >
-          {loading ? (
-            <div className="w-4 h-4 border-2 border-brand-200 border-t-transparent rounded-full animate-spin" />
-          ) : (
-            <>
-              <Upload className="w-4 h-4" />
-              <span className="ml-2">Upload</span>
-            </>
-          )}
-        </Button>
-      )}
+    <div className={className}>
       <input
-        id="fileInput"
         type="file"
+        id="file-upload"
         className="hidden"
-        accept=".pdf,.jpg,.jpeg,.png"
         onChange={handleFileChange}
+        accept={acceptedFileTypes.join(',')}
       />
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        onClick={() => document.getElementById('file-upload')?.click()}
+        disabled={loading}
+        className="h-9"
+      >
+        {loading ? (
+          <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+        ) : (
+          <>
+            <Upload className="w-4 h-4 mr-2" />
+            Upload
+          </>
+        )}
+      </Button>
     </div>
   );
 } 

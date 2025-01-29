@@ -218,63 +218,102 @@ BEGIN
     PERFORM migrate_company_profiles();
 END $$;
 
--- Create function to handle seller conversion
+-- Create function to convert user to seller
 CREATE OR REPLACE FUNCTION convert_to_seller(
-    profile_id UUID,
-    company_data JSONB
+  profile_id UUID,
+  company_data JSONB
 )
-RETURNS UUID AS $$
+RETURNS UUID
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
 DECLARE
-    new_company_id UUID;
+  company_id UUID;
+  activity_id UUID;
 BEGIN
-    -- Insert new company
-    INSERT INTO companies (
-        name,
-        description,
-        address,
-        website,
-        business_category,
-        year_established,
-        employee_count,
-        main_products,
-        verification_status
-    )
-    VALUES (
-        company_data->>'name',
-        company_data->>'description',
-        company_data->>'address',
-        company_data->>'website',
-        company_data->>'business_category',
-        (company_data->>'year_established')::date,
-        (company_data->>'employee_count')::integer,
-        ARRAY(SELECT jsonb_array_elements_text(company_data->'main_products')),
-        'not_applied'::verification_status_enum
-    )
-    RETURNING id INTO new_company_id;
+  -- Create company record
+  INSERT INTO companies (
+    name,
+    description,
+    address,
+    website,
+    business_category,
+    date_established,
+    employee_count,
+    main_products,
+    logo_url,
+    social_media,
+    status
+  )
+  VALUES (
+    company_data->>'name',
+    company_data->>'description',
+    company_data->>'address',
+    company_data->>'website',
+    company_data->>'business_category',
+    (company_data->>'date_established')::TIMESTAMP,
+    (company_data->>'employee_count')::INT,
+    (company_data->>'main_products')::JSONB,
+    company_data->>'logo_url',
+    (company_data->>'social_media')::JSONB,
+    'pending'
+  )
+  RETURNING id INTO company_id;
 
-    -- Update profile
-    UPDATE profiles 
-    SET 
-        user_type = 'SELLER',
-        company_id = new_company_id,
-        updated_at = NOW()
-    WHERE id = profile_id;
+  -- Update profile to seller type
+  UPDATE profiles
+  SET 
+    user_type = 'seller',
+    company_id = company_id,
+    updated_at = NOW()
+  WHERE id = profile_id;
 
-    -- Create initial verification record
-    INSERT INTO seller_verification_records (
-        company_id,
-        verification_type,
-        status
-    )
-    VALUES (
-        new_company_id,
-        'business',
-        'not_applied'
-    );
+  -- Create activity record
+  INSERT INTO recent_activities (
+    profile_id,
+    activity_type,
+    activity_data,
+    created_at
+  )
+  VALUES (
+    profile_id,
+    'seller_conversion',
+    jsonb_build_object(
+      'company_id', company_id,
+      'status', 'pending',
+      'company_name', company_data->>'name'
+    ),
+    NOW()
+  )
+  RETURNING id INTO activity_id;
 
-    RETURN new_company_id;
+  -- Create notification for admins
+  INSERT INTO notifications (
+    recipient_type,
+    recipient_id,
+    type,
+    title,
+    message,
+    data,
+    created_at
+  )
+  SELECT
+    'admin',
+    id,
+    'new_seller_application',
+    'New Seller Application',
+    format('New seller application from %s', company_data->>'name'),
+    jsonb_build_object(
+      'company_id', company_id,
+      'profile_id', profile_id
+    ),
+    NOW()
+  FROM profiles
+  WHERE user_type = 'admin';
+
+  RETURN company_id;
 END;
-$$ LANGUAGE plpgsql;
+$$;
 
 -- Create trigger to update companies.updated_at
 CREATE OR REPLACE FUNCTION update_companies_updated_at()
