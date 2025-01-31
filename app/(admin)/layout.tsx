@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { Loading } from '@/components/Loading';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { useToast } from '@/hooks/use-toast';
+import { AdminNav } from '@/components/shared/AdminNav';
 
 export default function ProtectedLayout({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -49,5 +50,12 @@ export default function ProtectedLayout({ children }: { children: React.ReactNod
     return <Loading />
   }
 
-  return <div className="w-full flex flex-col gap-12 items-start">{children}</div>;
+  return (
+    <div className="min-h-screen flex flex-col">
+      <AdminNav />
+      <div className="flex-1 p-6">
+        {children}
+      </div>
+    </div>
+  );
 }

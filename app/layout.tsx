@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import NavbarWrapper from "@/components/home/navbar";
 import Footer from "@/components/home/Footer";
 import { ChatProvider } from "@/context/ChatContext";
+import { CompanyProvider } from '@/context/CompanyContext';
 
 export const dynamic = 'force-dynamic';
 
@@ -28,17 +29,19 @@ export default async function RootLayout({
   return (
     <html lang="en" className={inter.className}>
       <body className="bg-background-light text-foreground">
-        <AuthProvider>        
-          <ChatProvider>
-            <NavbarWrapper />
-            <main className="min-h-screen flex flex-col items-center">
-              <div className="flex flex-col gap-20 w-full">
-                {children}
-              </div>
-              <Toaster />
-            </main>
-            <Footer />
-          </ChatProvider>
+        <AuthProvider>
+          <CompanyProvider>
+            <ChatProvider>
+              <NavbarWrapper />
+              <main className="min-h-screen flex flex-col items-center">
+                <div className="flex flex-col gap-20 w-full">
+                  {children}
+                </div>
+                <Toaster />
+              </main>
+              <Footer />
+            </ChatProvider>
+          </CompanyProvider>
         </AuthProvider>
       </body>
     </html>
