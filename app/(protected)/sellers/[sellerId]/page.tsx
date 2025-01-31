@@ -168,7 +168,7 @@ const SellerProfilePage = ({ params }: { params: { sellerId: string } }) => {
               <Image src={sellerCompanyProfile.company_logo_url} alt={sellerCompanyProfile.company_name} width={50} height={50} className="rounded-full" />
             </motion.div>
             <div>
-              <h1 className="text-xl font-bold text-gray-800">{sellerCompanyProfile.company_name}</h1>
+                <h1 className="text-xl font-bold text-gray-800">{sellerCompanyProfile.company_name}</h1>
               <p className="text-sm text-gray-600 flex items-center">
                 <MapPin className="w-4 h-4 mr-1" />
                 {sellerCompanyProfile.company_address}

@@ -43,7 +43,7 @@ const SellerCard: React.FC<SellerCardProps> = ({ seller }) => {
               <AvatarImage src={companyProfile.company_logo_url} alt={companyProfile.company_name || 'Company Logo'} />
               <AvatarFallback className="bg-brand-100 text-brand-700">{companyProfile.company_name?.charAt(0) || 'C'}</AvatarFallback>
             </Avatar>
-            <CardTitle className="text-2xl font-bold text-brand-700">{companyProfile.company_name}</CardTitle>
+              <CardTitle className="text-2xl font-bold text-brand-700">{companyProfile.company_name}</CardTitle>
           </CardHeader>
           <CardContent className="p-6">
             {companyProfile.overview?.mainProducts && (
