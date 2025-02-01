@@ -14,7 +14,7 @@ import { useAuth } from '@/context/AuthContext'
 import FileUpload from '@/components/chat/FileUpload'
 import ChatMessage from '@/components/chat/ChatMessage'
 import { useToast } from "@/hooks/use-toast"
-import { CreateOrderButton } from '@/components/order/CreateOrderButton'
+import { OrderActionButton } from '@/components/order/OrderActionButton'
 import { cn } from "@/lib/utils"
 import type { Message } from '@/types/chats/types'
 
@@ -229,13 +229,13 @@ const ChatWindow: React.FC = () => {
             </AnimatePresence>
           </div>
         </div>
-        {currentUser?.id === currentConversation.buyer_id && (
-          <CreateOrderButton 
+        <div>
+          <OrderActionButton 
             sellerId={currentConversation.seller_id}
             productId={currentConversation.product_id}
             conversationId={currentConversation.id}
           />
-        )}
+        </div>
       </motion.div>
 
       {/* Messages Area */}

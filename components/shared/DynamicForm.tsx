@@ -47,7 +47,7 @@ export interface FormFieldOption {
   options?: FormFieldOption[];
 }
 
-export interface FormField {
+export type FormField = {
   name: string;
   label: string;
   type: "text" | "email" | "password" | "phone" | "select" | "textarea" | "date" | "url" | "number";
@@ -57,8 +57,10 @@ export interface FormField {
   options?: { label: string; value: string; options?: { label: string; value: string; }[] }[];
   rows?: number;
   className?: string;
-  min?: number;
+  min?: number | string;
   max?: number;
+  readOnly?: boolean;
+  defaultValue?: any;
   calendarProps?: {
     mode?: "single" | "multiple" | "range";
     captionLayout?: "dropdown" | "dropdown-months" | "dropdown-years";
@@ -277,8 +279,8 @@ export function DynamicForm({
               type="date"
               {...formField}
               className={cn(inputClass, "h-10")}
-              min="1900-01-01"
-              max={new Date().toISOString().split('T')[0]}
+              min={field.name === 'delivery_date' ? field.min : "1900-01-01"}
+              max={field.name === 'delivery_date' ? undefined : new Date().toISOString().split('T')[0]}
             />
             {renderError()}
           </div>
