@@ -35,8 +35,16 @@ const nextConfig = {
                 hostname: 'lh3.googleusercontent.com',
                 protocol: 'https',
             },
-        ], // Add your Supabase storage domain here
-    }
+            {
+                protocol: 'https',
+                hostname: 'images.livemint.com',
+            },
+            {
+                protocol: 'https',
+                hostname: 'www.investindia.gov.in',
+            },
+        ],
+    },
 };
 
 module.exports = nextConfig;

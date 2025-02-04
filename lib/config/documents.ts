@@ -7,6 +7,8 @@ export interface DocumentConfig {
   required: boolean;
   maxSizeMB?: number;
   acceptedTypes?: string[];
+  maxSize: number; // in bytes
+  allowedTypes: string[];
 }
 
 // Document configuration that will be used across the application
@@ -17,7 +19,9 @@ export const DOCUMENT_CONFIG: DocumentConfig[] = [
     description: "Upload your GST registration certificate",
     required: true,
     maxSizeMB: 5,
-    acceptedTypes: [".pdf"]
+    acceptedTypes: [".pdf"],
+    maxSize: 5 * 1024 * 1024,
+    allowedTypes: [".pdf"]
   },
   {
     type: "iec",
@@ -25,7 +29,9 @@ export const DOCUMENT_CONFIG: DocumentConfig[] = [
     description: "Upload your Import Export Code (IEC)",
     required: true,
     maxSizeMB: 5,
-    acceptedTypes: [".pdf"]
+    acceptedTypes: [".pdf"],
+    maxSize: 5 * 1024 * 1024,
+    allowedTypes: [".pdf"]
   },
   {
     type: "quality",
@@ -33,7 +39,9 @@ export const DOCUMENT_CONFIG: DocumentConfig[] = [
     description: "Upload your quality inspection certificate",
     required: false,
     maxSizeMB: 5,
-    acceptedTypes: [".pdf"]
+    acceptedTypes: [".pdf"],
+    maxSize: 5 * 1024 * 1024,
+    allowedTypes: [".pdf"]
   }
 ];
 
@@ -67,21 +75,18 @@ export const createDocumentsSchema = () => {
 };
 
 // Utility function to validate file
-export const validateFile = (file: File, config: DocumentConfig) => {
+export function validateFile(file: File, config: DocumentConfig): string | null {
   const errors: string[] = [];
 
-  // Check file size
-  if (config.maxSizeMB && file.size > config.maxSizeMB * 1024 * 1024) {
-    errors.push(`File size must be less than ${config.maxSizeMB}MB`);
-  }
-
   // Check file type
-  if (config.acceptedTypes && config.acceptedTypes.length > 0) {
-    const fileExt = `.${file.name.split('.').pop()?.toLowerCase()}`;
-    if (!config.acceptedTypes.includes(fileExt)) {
-      errors.push(`File must be one of: ${config.acceptedTypes.join(', ')}`);
-    }
+  if (!config.allowedTypes.includes(file.type)) {
+    errors.push(`Invalid file type. Allowed types: ${config.allowedTypes.join(', ')}`);
   }
 
-  return errors;
-}; 
+  // Check file size
+  if (file.size > config.maxSize) {
+    errors.push(`File too large. Maximum size: ${config.maxSize / 1024 / 1024}MB`);
+  }
+
+  return errors.length > 0 ? errors[0] : null;
+} 

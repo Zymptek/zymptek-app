@@ -7,7 +7,7 @@ import { OrderForm } from '@/components/order/OrderForm'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/AuthContext'
-import type { Database } from '@/types/supabase'
+import type { Database } from '@/lib/database.types'
 
 interface OrderActionButtonProps {
   sellerId: string

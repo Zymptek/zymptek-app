@@ -19,12 +19,16 @@ interface ProductCardProps {
 const ProductCard: React.FC<ProductCardProps> = ({ product, categoryName }) => {
   const [category, setCategory] = useState<Category | null>(null);
   const [imageError, setImageError] = useState(false);
+  const [validImageUrl, setValidImageUrl] = useState<string | null>(null);
   const supabase = createClientComponentClient<Database>();
+
+  // Default product image if no image is available or loading fails
+  const defaultProductImage = 'https://via.placeholder.com/400x300?text=Product+Image';
 
   useEffect(() => {
     const fetchCategory = async () => {
       if (categoryName) {
-        setCategory({ id: product.category_id, name: categoryName } as Category);
+        setCategory({ id: product.category_id, name: categoryName, icon: '' } as Category);
         return;
       }
 
@@ -44,14 +48,70 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, categoryName }) => {
     fetchCategory();
   }, [product.category_id, categoryName, supabase]);
 
+  useEffect(() => {
+    const checkImageUrl = async (url: string) => {
+      try {
+        const response = await fetch(url, { method: 'HEAD' });
+        return response.ok;
+      } catch (error) {
+        return false;
+      }
+    };
+
+    const findValidImage = async () => {
+      if (!product.image_urls || product.image_urls.length === 0) {
+        setValidImageUrl(defaultProductImage);
+        return;
+      }
+
+      for (const url of product.image_urls) {
+        if (url && url.startsWith('http')) {
+          const isValid = await checkImageUrl(url);
+          if (isValid) {
+            setValidImageUrl(url);
+            return;
+          }
+        }
+      }
+
+      setValidImageUrl(defaultProductImage);
+    };
+
+    findValidImage();
+  }, [product.image_urls]);
+
   const handleImageError = () => {
     setImageError(true);
+    setValidImageUrl(defaultProductImage);
   };
 
-  const truncateDescription = (description: string, maxLength: number) => {
+  const truncateDescription = (description: string | null, maxLength: number) => {
+    if (!description) return '';
     if (description.length <= maxLength) return description;
     return description.slice(0, maxLength).trim() + '...';
   };
+
+  // Extract pricing from the Json type
+  const getPricing = (pricing: Json[] | null) => {
+    if (!pricing || pricing.length === 0) return null;
+    const firstPrice = pricing[0] as { price?: number };
+    return firstPrice?.price;
+  };
+
+  // Extract shipping info from the Json type
+  const getShippingInfo = (info: Json | null) => {
+    if (!info) return null;
+    const shippingInfo = info as { leadTime?: string };
+    return shippingInfo?.leadTime;
+  };
+
+  const price = getPricing(product.pricing);
+  const leadTime = getShippingInfo(product.shipping_info);
+
+  // Show loading state while checking image
+  if (!validImageUrl) {
+    return <div className="animate-pulse bg-gray-200 rounded-xl h-full min-h-[300px]" />;
+  }
 
   return (
     <motion.div
@@ -61,38 +121,38 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, categoryName }) => {
     >
       <Link href={`/products/${product.product_id}`} className="flex flex-col h-full">
         <div className="relative h-48 sm:h-56 md:h-64 lg:h-48 xl:h-56 w-full flex-shrink-0">
-          {!imageError ? (
-            <Image
-              src={product.image_urls[0]}
-              alt={product.headline}
-              layout="fill"
-              objectFit="cover"
-              className="transition-transform duration-300 hover:scale-105"
-              onError={handleImageError}
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center bg-gray-200">
-              <span className="text-gray-400 text-sm sm:text-base lg:text-lg">Image not available</span>
-            </div>
-          )}
+          <Image
+            src={imageError ? defaultProductImage : validImageUrl}
+            alt={product.headline || 'Product Image'}
+            fill
+            className="object-cover transition-transform duration-300 hover:scale-105"
+            onError={handleImageError}
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            priority={false}
+          />
           {product.sample_available && (
             <span className="absolute top-2 left-2 sm:top-3 sm:left-3 bg-green-500 text-white text-xs font-bold px-2 sm:px-3 py-1 rounded-full">
               Sample Available
             </span>
+          )}
+          {product.is_featured && (
+            <div className="absolute top-2 right-2 bg-brand-200 text-white px-2 py-1 rounded-full text-xs">
+              Featured
+            </div>
           )}
         </div>
         <div className="p-3 sm:p-4 flex flex-col flex-grow">
           <h3 className="text-base sm:text-lg font-bold text-gray-800 mb-1 sm:mb-2 truncate">{product.headline}</h3>
           <div className="relative mb-2 sm:mb-3">
             <p className="text-xs sm:text-sm text-gray-600 h-8 sm:h-12 overflow-hidden">
-              {truncateDescription(product.description!, 70)}
+              {truncateDescription(product.description, 70)}
             </p>
           </div>
           <div className="flex justify-between items-center mb-2 sm:mb-3">
-            {product.pricing && product.pricing.length > 0 && (
+            {price && (
               <p className="text-lg sm:text-xl font-bold text-brand-300">
-                ${(product.pricing[0] as { price: number }).price.toFixed(2)}
-                {product.pricing.length > 1 && <span className="text-xs sm:text-sm ml-1">+</span>}
+                ${price.toFixed(2)}
+                {product.pricing && product.pricing.length > 1 && <span className="text-xs sm:text-sm ml-1">+</span>}
               </p>
             )}
             {product.moq && (
@@ -112,6 +172,11 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, categoryName }) => {
               </span>
             )}
           </div>
+          {leadTime && (
+            <div className="mt-2 text-sm text-brand-300">
+              Lead Time: {leadTime}
+            </div>
+          )}
         </div>
       </Link>
     </motion.div>

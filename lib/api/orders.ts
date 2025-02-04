@@ -1,6 +1,6 @@
 import { createServerComponentClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
-import type { Database } from '@/types/supabase'
+import type { Database } from '@/lib/database.types'
 
 export async function getOrderById(orderId: string) {
   const supabase = createServerComponentClient<Database>({ cookies })

@@ -1,7 +1,8 @@
+'use client';
+
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { Database } from '@/lib/database.types';
 import { validateFile, DocumentConfig } from '@/lib/config/documents';
-import { supabase } from '@/lib/supabase';
 import { deleteObject, uploadObject } from '@/lib/storage';
 
 export interface DocumentUploadResult {
@@ -11,142 +12,122 @@ export interface DocumentUploadResult {
   filePath?: string;
 }
 
+export interface Company {
+  id: string;
+  [key: string]: any;
+}
+
+const supabase = createClientComponentClient<Database>();
+
 export const handleDocumentStorage = async (
   file: File,
-  userId: string,
-  documentType: string,
-  config: DocumentConfig
+  config: DocumentConfig,
+  bucketName: string,
+  filePath: string
 ): Promise<DocumentUploadResult> => {
-  let filePath = '';
-
   try {
-    // Validate config
-    if (!config || typeof config !== 'object') {
-      console.error('Invalid config:', config);
+    // Validate the file
+    const validationError = validateFile(file, config);
+    if (validationError) {
       return {
         success: false,
-        error: 'Invalid document configuration'
+        error: validationError
       };
     }
 
-    // Validate file
-    const validationErrors = validateFile(file, config);
-    if (validationErrors.length > 0) {
-      console.error('File validation failed:', {
-        errors: validationErrors,
-        fileType: file.type,
-        fileSize: file.size,
-        config
-      });
+    // Upload the file
+    const { error: uploadError } = await supabase.storage
+      .from(bucketName)
+      .upload(filePath, file);
+
+    if (uploadError) {
+      console.error('Error uploading file:', uploadError);
       return {
         success: false,
-        error: validationErrors.join(', ')
+        error: uploadError.message
       };
     }
 
-    const fileExt = file.name.split('.').pop();
-    filePath = `${userId}/company/details/${documentType}-${Math.random()}.${fileExt}`;
-
-    console.log('Attempting file upload:', {
-      bucket: 'company-images',
-      filePath,
-      fileSize: file.size,
-      fileType: file.type,
-      documentType,
-      configType: config.type
-    });
-
-    const { url, error: uploadError } = await uploadObject('company-images', filePath, file);
-
-    if (uploadError || !url) {
-      throw uploadError || new Error('Failed to get upload URL');
-    }
+    // Get the public URL
+    const { data: { publicUrl } } = supabase.storage
+      .from(bucketName)
+      .getPublicUrl(filePath);
 
     return {
       success: true,
-      url,
+      url: publicUrl,
       filePath
     };
-  } catch (error) {
-    // If we have a filePath and URL, attempt to clean up the uploaded file
-    if (filePath) {
-      try {
-        await deleteObject(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/company-images/${filePath}`);
-      } catch (cleanupError) {
-        console.error('Failed to cleanup file after error:', cleanupError);
-      }
-    }
 
-    console.error('Document storage error:', {
-      error,
-      userId,
-      documentType,
-      fileName: file.name,
-      fileSize: file.size,
-      fileType: file.type,
-      config
-    });
-    
-    if (error instanceof Error) {
-      return {
-        success: false,
-        error: error.message
-      };
-    }
-    
+  } catch (error) {
+    console.error('Error handling document storage:', error);
     return {
       success: false,
-      error: 'Failed to upload document to storage'
+      error: error instanceof Error ? error.message : 'Unknown error occurred'
     };
   }
 };
 
-export const updateCompanyDocument = async (
-  companyId: string,
-  documentType: string,
-  documentUrl: string,
-  fileName: string
-) => {
-  const supabase = createClientComponentClient<Database>();
-
+export const handleDocumentDeletion = async (
+  bucketName: string,
+  filePath: string
+): Promise<boolean> => {
   try {
-    // Check if document already exists
-    const { data: existingDocs, error: fetchError } = await supabase
-      .from('company_documents')
-      .select('*')
-      .eq('company_id', companyId)
-      .eq('document_type', documentType);
+    const { error } = await supabase.storage
+      .from(bucketName)
+      .remove([filePath]);
 
-    if (fetchError) throw fetchError;
-
-    if (existingDocs && existingDocs.length > 0) {
-      // Update existing document
-      const { error } = await supabase
-        .from('company_documents')
-        .update({
-          document_url: documentUrl,
-          uploaded_at: new Date().toISOString(),
-          verification_status: 'pending'
-        })
-        .eq('id', existingDocs[0].id);
-
-      if (error) throw error;
-    } else {
-      // Create new document
-      const { error } = await supabase
-        .from('company_documents')
-        .insert({
-          company_id: companyId,
-          document_type: documentType,
-          document_url: documentUrl,
-          uploaded_at: new Date().toISOString(),
-          verification_status: 'pending'
-        });
-
-      if (error) throw error;
+    if (error) {
+      console.error('Error deleting file:', error);
+      return false;
     }
 
-    return { success: true };
+    return true;
+  } catch (error) {
+    console.error('Error handling document deletion:', error);
+    return false;
+  }
+};
+
+export const updateCompanyDocument = async (
+  company: Company,
+  doc: {
+    file: File;
+    documentType: string;
+    config: DocumentConfig;
+  }
+): Promise<DocumentUploadResult> => {
+  try {
+    // Upload new document
+    const uploadResult = await handleDocumentStorage(
+      doc.file,
+      doc.config,
+      'company-images',
+      `${company.id}/company/details/${doc.documentType}-${Math.random()}.${doc.file.name.split('.').pop()}`
+    );
+
+    if (!uploadResult.success) {
+      return uploadResult;
+    }
+
+    // Update company record with new document URL
+    const { error: updateError } = await supabase
+      .from('companies')
+      .update({
+        [`${doc.documentType}_url`]: uploadResult.url,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', company.id);
+
+    if (updateError) {
+      console.error('Error updating company record:', updateError);
+      return {
+        success: false,
+        error: updateError.message
+      };
+    }
+
+    return uploadResult;
   } catch (error) {
     console.error('Error updating company document:', error);
     return {
@@ -222,9 +203,9 @@ export const handleSubmitAllDocuments = async (
       // Upload to storage
       const uploadResult = await handleDocumentStorage(
         doc.file,
-        company.id,
-        doc.documentType,
-        doc.config
+        doc.config,
+        'company-images',
+        `${company.id}/company/details/${doc.documentType}-${Math.random()}.${doc.file.name.split('.').pop()}`
       );
 
       if (!uploadResult.success || !uploadResult.url) {
