@@ -1,6 +1,6 @@
 "use client";
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useProductEditor } from '@/hooks/useProductEditor';
@@ -13,11 +13,66 @@ import SimilarProducts from '@/components/product/SimilarProducts';
 import ActionButtons from '@/components/product/ActionButtons';
 import "react-responsive-carousel/lib/styles/carousel.min.css";
 import ReactMarkdown from 'react-markdown';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { Database } from '@/lib/database.types';
+
+// Constants for view tracking
+const MIN_VIEW_TIME = 5000; // 5 seconds minimum time on page
+const VIEW_COOLDOWN = 1800000; // 30 minutes between views from same user
 
 const ProductPage = () => {
   const { user } = useAuth();
   const { productId } = useParams();
   const { product, isLoading } = useProductEditor(productId as string);
+  const supabase = createClientComponentClient<Database>();
+  const [hasRecordedView, setHasRecordedView] = useState(false);
+
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+    let mounted = true;
+
+    const recordView = async () => {
+      if (!productId || hasRecordedView) return;
+
+      // Check if we've recorded a view recently using sessionStorage
+      const lastViewTime = sessionStorage.getItem(`product_view_${productId}`);
+      const currentTime = Date.now();
+      
+      if (lastViewTime && currentTime - parseInt(lastViewTime) < VIEW_COOLDOWN) {
+        return;
+      }
+
+      // Wait for minimum view time before recording
+      timeoutId = setTimeout(async () => {
+        if (!mounted) return;
+
+        try {
+          await supabase.rpc('record_product_view', {
+            _product_id: productId as string,
+            _viewer_id: user?.id,
+            _ip_address: undefined,
+            _user_agent: window.navigator.userAgent
+          });
+
+          // Record the view time in sessionStorage
+          sessionStorage.setItem(`product_view_${productId}`, currentTime.toString());
+          setHasRecordedView(true);
+        } catch (error) {
+          console.error('Error recording view:', error);
+        }
+      }, MIN_VIEW_TIME);
+    };
+
+    recordView();
+
+    // Cleanup function
+    return () => {
+      mounted = false;
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
+  }, [productId, user?.id, supabase, hasRecordedView]);
 
   if (isLoading) {
     return <Loading />;

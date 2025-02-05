@@ -61,7 +61,7 @@ function MessagesContent() {
       {/* Chat Window */}
       <div 
         className={cn(
-          "flex-1 bg-card/95 rounded-2xl shadow-lg",
+          "flex-1 bg-card/95 rounded-2xl shadow-lg relative",
           "border-2 border-border/80 backdrop-blur-xl",
           "bg-gradient-to-b from-background/50 to-background/30",
           isMobile && !currentConversation ? 'hidden' : 'block'

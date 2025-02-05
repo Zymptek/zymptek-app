@@ -45,24 +45,14 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
         "max-w-[70%] relative group",
         isCurrentUser ? "ml-12" : "mr-12"
       )}>
-        <div className={cn(
-          "rounded-2xl p-3 shadow-sm transition-all duration-300",
-          isCurrentUser 
-            ? "bg-brand-300 text-white hover:bg-brand-400" 
-            : "bg-white/80 text-brand-300 hover:bg-white dark:bg-background-light dark:hover:bg-background",
-          // Rounded corners based on message grouping
-          isCurrentUser ? (
-            cn(
-              isFirstInGroup ? "rounded-tr-2xl" : "rounded-tr-md",
-              isLastInGroup ? "rounded-br-2xl" : "rounded-br-md"
-            )
-          ) : (
-            cn(
-              isFirstInGroup ? "rounded-tl-2xl" : "rounded-tl-md",
-              isLastInGroup ? "rounded-bl-2xl" : "rounded-bl-md"
-            )
-          )
-        )}>
+        <div
+          className={cn(
+            "flex flex-col space-y-2 p-4 rounded-lg",
+            isCurrentUser
+              ? "bg-brand-300 text-white hover:bg-brand-400"
+              : "bg-white/80 text-brand-300 hover:bg-white"
+          )}
+        >
           <div className="break-words">
             {message.content}
           </div>

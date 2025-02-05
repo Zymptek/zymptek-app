@@ -1,3 +1,5 @@
+'use client'
+
 import { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -7,7 +9,7 @@ interface OrderDocumentsProps {
   orderId: string
 }
 
-export const OrderDocuments = ({ orderId }: OrderDocumentsProps) => {
+export function OrderDocuments({ orderId }: OrderDocumentsProps) {
   const [documents, setDocuments] = useState([
     { id: 1, name: 'Purchase Agreement', status: 'pending' },
     { id: 2, name: 'Shipping Documents', status: 'completed' },

@@ -48,17 +48,17 @@ const SellerProductCard: React.FC<ProductCardProps> = ({ isSeller, user }) => {
   return (
     <Card id='products' className="mb-8 relative">
       <CardHeader>
-        <CardTitle className="text-2xl font-bold text-brand-200">Products</CardTitle>
-        {isSeller && (
-          <Link href={`/create-product/${user.user_id}`} passHref>
-            <Button
+            <CardTitle className="text-2xl font-bold text-brand-200">Products</CardTitle>
+          {isSeller && (
+            <Link href={`/create-product/${user.user_id}`} passHref>
+              <Button
               className="absolute top-4 right-4 btn-primary flex items-center gap-2 transition-transform hover:scale-105"
-            >
-              <Plus size={16} />
-              Create Product
-            </Button>
-          </Link>
-        )}
+              >
+                <Plus size={16} />
+                Create Product
+              </Button>
+            </Link>
+          )}
       </CardHeader>
       <CardContent>
         {loading ? (

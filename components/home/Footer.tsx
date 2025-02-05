@@ -59,8 +59,7 @@ const Footer = () => {
             <div>
               <h3 className="text-lg font-semibold mb-4">Contact Us</h3>
               <p className="text-sm mb-2">Email: info@zymptek.com</p>
-              <p className="text-sm mb-2">Phone: +91 123 456 7890</p>
-              <p className="text-sm mb-4">Address: 123 Business Street, Tech Park, Bangalore, India 560001</p>
+              <p className="text-sm mb-4">Address: 308 Shivdhara Arcade, Kalol. Gandhinagar, India</p>
               <button 
                 onClick={() => setShowTypeform(true)}
                 className="text-white hover:text-white border-2 border-white px-4 py-2 rounded-full text-sm hover:bg-brand-300 transition-colors"
@@ -70,7 +69,7 @@ const Footer = () => {
             </div>
           </div>
           <div className="mt-12 pt-8 border-t border-brand-300 text-center text-sm">
-            <p>&copy; 2023 Zymptek. All rights reserved.</p>
+            <p>&copy; 2024 Zymptek. All rights reserved.</p>
           </div>
         </div>
 

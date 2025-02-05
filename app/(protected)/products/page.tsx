@@ -15,6 +15,36 @@ type SortOption = 'price_asc' | 'price_desc';
 const ITEMS_PER_PAGE = 12;
 
 type Product = Database['public']['Functions']['get_products']['Returns'][number];
+type TableProduct = Tables<'products'>;
+
+const mapToTableProduct = (product: Product): TableProduct => {
+  return {
+    product_id: product.product_id,
+    category_id: product.category_id,
+    subcategory_id: product.subcategory_id || null,
+    seller_id: product.seller_id,
+    headline: product.headline,
+    description: product.description,
+    created_at: product.created_at,
+    updated_at: product.updated_at || null,
+    image_urls: product.image_urls,
+    pricing: product.pricing,
+    specifications: product.specifications || null,
+    customization: product.customization || null,
+    packaging: product.packaging || null,
+    shipping_info: product.shipping_info || null,
+    variations: product.variations || null,
+    moq: product.moq || null,
+    sample_available: product.sample_available || false,
+    payment_terms: product.payment_terms || null,
+    shipping_terms: product.shipping_terms || null,
+    status: 'active',
+    views_count: 0,
+    orders_count: 0,
+    last_viewed_at: null,
+    is_featured: false
+  };
+};
 
 export default function ProductsPage() {
   const router = useRouter();
@@ -212,7 +242,7 @@ export default function ProductsPage() {
               exit={{ opacity: 0, y: 20 }}
             >
               <ProductCard 
-                product={product} 
+                product={mapToTableProduct(product)}
                 categoryName={product.category_name}
               />
             </motion.div>
