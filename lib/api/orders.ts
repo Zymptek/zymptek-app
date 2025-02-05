@@ -59,23 +59,3 @@ export async function getOrderUpdates(orderId: string) {
 
   return updates
 }
-
-export async function getOrderMessages(orderId: string) {
-  const supabase = createServerComponentClient<Database>({ cookies })
-
-  const { data: messages, error } = await supabase
-    .from('order_messages')
-    .select(`
-      *,
-      user:users(*)
-    `)
-    .eq('order_id', orderId)
-    .order('created_at', { ascending: true })
-
-  if (error) {
-    console.error('Error fetching messages:', error)
-    return []
-  }
-
-  return messages
-} 

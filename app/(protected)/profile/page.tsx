@@ -15,33 +15,26 @@ import {
   Briefcase,
   Building2,
   Globe,
-  Twitter,
-  Linkedin,
-  Facebook,
   Edit,
   Calendar,
   Clock,
   ShoppingCart,
   TrendingUp,
-  Users,
-  Star,
-  Plus,
   Eye,
   User,
   CheckCircle2,
   AlertCircle,
-  ArrowRight
+  ArrowRight,
+  Plus,
+  Star
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-import { Database } from '@/lib/database.types';
-import { useState, useEffect, useMemo } from "react";
+import type { Database } from '@/lib/database.types';
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { EditDialog } from "@/components/shared/EditDialog";
-import { ProfileSchema, CompanySchema, profileFormFields, companyFormFields } from "@/lib/schema/profileSchema";
-import { recordActivity } from "@/lib/schema/activitySchema";
 import { ImageEditDialog } from "@/components/shared/ImageEditDialog";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -50,10 +43,16 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { VerifyCompanyButton } from "@/components/shared/VerifyCompanyButton";
 import { useCompany } from '@/context/CompanyContext';
 import Link from "next/link";
+import { ProfileForm } from "@/components/profile/profile-form";
+import { CompanyForm } from "@/components/profile/company-form";
+import { recordActivity } from "@/lib/schema/activitySchema";
+import type { ProfileWithMetadata } from "@/lib/types/profile";
+import type { CompanyWithMetadata, ProductionCapacity, SocialMedia } from '@/lib/types/company';
+import { parseJsonField } from "@/lib/types/company";
 
+// Animation variants
 const container = {
   hidden: { opacity: 0 },
   show: {
@@ -89,96 +88,61 @@ const stagger = {
   }
 };
 
-type ProductAnalytics = {
+// Types
+interface ProductAnalytics {
   total_views: number;
   unique_viewers: number;
   conversion_rate: number;
   last_viewed: string;
-};
+}
 
-type SellerAnalytics = {
+interface SellerAnalytics {
   total_products: number;
   total_views: number;
   total_orders: number;
   overall_conversion_rate: number;
-};
+}
 
-type TopProduct = {
+interface TopProduct {
   product_id: string;
   headline: string;
   views_count: number;
   orders_count: number;
   conversion_rate: number;
   last_viewed_at: string;
-};
-
-type Company = Database['public']['Tables']['companies']['Row'];
-type VerificationStatus = Database['public']['Enums']['verification_status_enum'];
-
-// Define types for JSON fields
-interface ProductionCapacity {
-  factorySize?: number | null;
-  annualOutput?: number | null;
-  productionLines?: number | null;
-  qualityControlStaff?: number | null;
 }
 
-interface SocialMedia {
-  linkedin?: string;
-  twitter?: string;
-  facebook?: string;
+interface Document {
+  document_type: string;
+  document_url: string;
 }
 
-type Json = Database['public']['Tables']['companies']['Row']['production_capacity'];
-
-// Helper function to safely parse JSON fields
-const parseJsonField = <T,>(field: Json | null | undefined, defaultValue: T): T => {
-  if (!field) return defaultValue;
-  try {
-    return (typeof field === 'string' ? JSON.parse(field) : field) as T;
-  } catch {
-    return defaultValue;
-  }
-};
+// Helper functions for verification status
+const isVerified = (status: Database['public']['Enums']['verification_status_enum']) => status === 'approved';
+const isPending = (status: Database['public']['Enums']['verification_status_enum']) => status === 'pending' || status === 'applied';
+const isNotVerified = (status: Database['public']['Enums']['verification_status_enum']) => status === 'not_applied';
 
 export default function ProfilePage() {
+  // Hooks
   const { profile, user } = useAuth();
   const { company, companyId, verificationStatus, isLoading: companyLoading, refetchCompany } = useCompany();
+  const supabase = createClientComponentClient<Database>();
+  const router = useRouter();
+  const { toast } = useToast();
+
+  // State
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [sellerAnalytics, setSellerAnalytics] = useState<SellerAnalytics | null>(null);
   const [topProducts, setTopProducts] = useState<TopProduct[]>([]);
   const [categories, setCategories] = useState<Array<{ id: string; name: string }>>([]);
   const [subcategories, setSubcategories] = useState<Array<{ id: string; name: string; category_id: string | null }>>([]);
-  const supabase = createClientComponentClient<Database>();
-  const router = useRouter();
-  const { toast } = useToast();
   const [editProfileOpen, setEditProfileOpen] = useState(false);
   const [editCompanyOpen, setEditCompanyOpen] = useState(false);
   const [editAvatarOpen, setEditAvatarOpen] = useState(false);
   const [editLogoOpen, setEditLogoOpen] = useState(false);
-  
-  // Get active tab from URL on client side
   const [activeTab, setActiveTab] = useState('dashboard');
-  
-  // Add state for documents
-  const [documents, setDocuments] = useState<Array<{ document_type: string; document_url: string }>>([]);
-  
-  useEffect(() => {
-    // Update active tab from URL on mount
-    const params = new URLSearchParams(window.location.search);
-    const tab = params.get('tab');
-    if (tab) {
-      setActiveTab(tab);
-    }
-  }, []);
-
-  // Update URL when tab changes
-  const handleTabChange = (value: string) => {
-    setActiveTab(value);
-    const newUrl = `${window.location.pathname}?tab=${value}`;
-    window.history.pushState({}, '', newUrl);
-  };
+  const [documents, setDocuments] = useState<Document[]>([]);
 
   // Transform categories and subcategories into grouped options format
   const categoryOptions = categories.map(cat => ({
@@ -190,18 +154,7 @@ export default function ProfilePage() {
         label: sub.name,
         value: sub.name.toLowerCase()
       }))
-  })).filter(cat => cat.options.length > 0); // Only include categories that have subcategories
-
-  // Create a copy of profileFormFields with updated categories
-  const updatedProfileFields = profileFormFields.map(field => {
-    if (field.name === "business_category") {
-      return {
-        ...field,
-        options: categoryOptions
-      };
-    }
-    return field;
-  });
+  })).filter(cat => cat.options.length > 0);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -295,7 +248,7 @@ export default function ProfilePage() {
   }
 
   // Transform company data to match form fields
-  const transformedCompanyData = {
+  const transformedData = {
     company_profile: {
       company_name: company?.name || "",
       company_address: company?.address || "",
@@ -306,15 +259,15 @@ export default function ProfilePage() {
         yearEstablished: company?.year_established || ""
       },
       productionCapacity: {
-        factorySize: parseJsonField<ProductionCapacity>(company?.production_capacity || null, {} as ProductionCapacity)?.factorySize?.toString() || "",
-        annualOutput: parseJsonField<ProductionCapacity>(company?.production_capacity || null, {} as ProductionCapacity)?.annualOutput?.toString() || "",
-        productionLines: parseJsonField<ProductionCapacity>(company?.production_capacity || null, {} as ProductionCapacity)?.productionLines?.toString() || "",
-        qualityControlStaff: parseJsonField<ProductionCapacity>(company?.production_capacity || null, {} as ProductionCapacity)?.qualityControlStaff?.toString() || ""
+        factorySize: parseJsonField<ProductionCapacity>(company?.production_capacity, {} as ProductionCapacity)?.factorySize?.toString() || "",
+        annualOutput: parseJsonField<ProductionCapacity>(company?.production_capacity, {} as ProductionCapacity)?.annualOutput?.toString() || "",
+        productionLines: parseJsonField<ProductionCapacity>(company?.production_capacity, {} as ProductionCapacity)?.productionLines?.toString() || "",
+        qualityControlStaff: parseJsonField<ProductionCapacity>(company?.production_capacity, {} as ProductionCapacity)?.qualityControlStaff?.toString() || "",
       },
       social_media: {
-        linkedin: parseJsonField<SocialMedia>(company?.social_media || null, {} as SocialMedia)?.linkedin || "",
-        twitter: parseJsonField<SocialMedia>(company?.social_media || null, {} as SocialMedia)?.twitter || "",
-        facebook: parseJsonField<SocialMedia>(company?.social_media || null, {} as SocialMedia)?.facebook || ""
+        linkedin: parseJsonField<SocialMedia>(company?.social_media, {} as SocialMedia)?.linkedin || "",
+        twitter: parseJsonField<SocialMedia>(company?.social_media, {} as SocialMedia)?.twitter || "",
+        facebook: parseJsonField<SocialMedia>(company?.social_media, {} as SocialMedia)?.facebook || ""
       }
     }
   };
@@ -534,10 +487,27 @@ export default function ProfilePage() {
     }
   };
 
-  // Helper function to check verification status
-  const isVerified = (status: VerificationStatus) => status === 'approved';
-  const isPending = (status: VerificationStatus) => status === 'pending' || status === 'applied';
-  const isNotVerified = (status: VerificationStatus) => status === 'not_applied';
+  // Update the verification status references to use the database enum type
+  const getVerificationStatusColor = (status: Database['public']['Enums']['verification_status_enum']) => {
+    if (isVerified(status)) return 'bg-green-100 text-green-800';
+    if (isPending(status)) return 'bg-yellow-100 text-yellow-800';
+    if (status === 'not_applied') return 'bg-gray-100 text-gray-800';
+    return 'bg-blue-100 text-blue-800';
+  };
+
+  const getVerificationStatusIcon = (status: Database['public']['Enums']['verification_status_enum']) => {
+    if (isVerified(status)) return <CheckCircle2 className="h-4 w-4 text-green-600" />;
+    if (isPending(status)) return <Clock className="h-4 w-4 text-yellow-600" />;
+    if (status === 'not_applied') return <User className="h-4 w-4 text-gray-600" />;
+    return <User className="h-4 w-4 text-blue-600" />;
+  };
+
+  const getVerificationStatusText = (status: Database['public']['Enums']['verification_status_enum']) => {
+    if (isVerified(status)) return 'Verified Seller';
+    if (isPending(status)) return 'Verification Pending';
+    if (status === 'not_applied') return 'Not Verified';
+    return 'Application Submitted';
+  };
 
   return (
     <div className="container max-w-7xl mx-auto py-10 px-4">
@@ -680,7 +650,7 @@ export default function ProfilePage() {
                   animate={{ opacity: 1, x: 0 }}
                   className="flex-1"
                 >
-                  <Tabs defaultValue={activeTab} onValueChange={handleTabChange} className="space-y-8">
+                  <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="space-y-8">
                     <TabsList className="inline-flex h-14 items-center justify-start rounded-xl bg-brand-100/10 p-1 text-muted-foreground w-full">
                       <TabsTrigger 
                         value="dashboard"
@@ -1122,7 +1092,7 @@ export default function ProfilePage() {
                                 </div>
                               </CardHeader>
                               <CardContent className="pt-6">
-                                <div className="grid md:grid-cols-2 gap-6">
+                                <div className="grid md:grid-cols-[1fr,2fr] gap-6">
                                   {/* Logo and Media */}
                                   <div>
                                     <div 
@@ -1147,104 +1117,60 @@ export default function ProfilePage() {
                                         </div>
                                       )}
                                     </div>
-                                    
-                                    {/* Basic Info */}
-                                    <div className="space-y-4">
-                                      <div className="p-4 rounded-lg bg-brand-100/5 border border-brand-100/20">
-                                        <h3 className="text-sm font-semibold text-brand-200 mb-4">Basic Information</h3>
-                                        <div className="space-y-3">
-                                          <div className="flex justify-between items-center">
-                                            <span className="text-sm text-muted-foreground">Company Name</span>
-                                            <span className="text-sm font-medium">{company?.name || "Not Set"}</span>
-                                          </div>
-                                          <div className="flex justify-between items-center">
-                                            <span className="text-sm text-muted-foreground">Business Category</span>
-                                            <span className="text-sm font-medium">
-                                              {profile.business_category ? 
-                                                profile.business_category.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ') 
-                                                : "Not Set"}
-                                            </span>
-                                          </div>
-                                          <div className="flex justify-between items-center">
-                                            <span className="text-sm text-muted-foreground">Year Established</span>
-                                            <span className="text-sm font-medium">
-                                              {company?.year_established ? 
-                                                new Date(company.year_established).getFullYear() : 
-                                                "Not Set"}
-                                            </span>
-                                          </div>
+                                  </div>
+                                  
+                                  {/* Basic Info and Contact Info */}
+                                  <div className="space-y-4">
+                                    <div className="p-4 rounded-lg bg-brand-100/5 border border-brand-100/20">
+                                      <h3 className="text-sm font-semibold text-brand-200 mb-4">Basic Information</h3>
+                                      <div className="space-y-3">
+                                        <div className="flex justify-between items-center">
+                                          <span className="text-sm text-muted-foreground">Company Name</span>
+                                          <span className="text-sm font-medium">{company?.name || "Not Set"}</span>
                                         </div>
-                                      </div>
-
-                                      <div className="p-4 rounded-lg bg-brand-100/5 border border-brand-100/20">
-                                        <h3 className="text-sm font-semibold text-brand-200 mb-4">Contact Information</h3>
-                                        <div className="space-y-3">
-                                          <div className="flex justify-between items-center">
-                                            <span className="text-sm text-muted-foreground">Address</span>
-                                            <span className="text-sm font-medium">{company?.address || "Not Set"}</span>
-                                          </div>
-                                          <div className="flex justify-between items-center">
-                                            <span className="text-sm text-muted-foreground">Website</span>
-                                            {company?.website ? (
-                                              <a 
-                                                href={company.website}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="text-sm font-medium text-brand-200 hover:text-brand-300 transition-colors"
-                                              >
-                                                {company.website}
-                                              </a>
-                                            ) : (
-                                              <span className="text-sm font-medium">Not Set</span>
-                                            )}
-                                          </div>
+                                        <div className="flex justify-between items-center">
+                                          <span className="text-sm text-muted-foreground">Business Category</span>
+                                          <span className="text-sm font-medium">
+                                            {profile.business_category ? 
+                                              profile.business_category.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ') 
+                                              : "Not Set"}
+                                          </span>
+                                        </div>
+                                        <div className="flex justify-between items-center">
+                                          <span className="text-sm text-muted-foreground">Year Established</span>
+                                          <span className="text-sm font-medium">
+                                            {company?.year_established ? 
+                                              new Date(company.year_established).getFullYear() : 
+                                              "Not Set"}
+                                          </span>
                                         </div>
                                       </div>
                                     </div>
-                                  </div>
-                                </div>
-                              </CardContent>
-                            </Card>
-                          </motion.div>
 
-                          {/* Company Overview Section */}
-                          <motion.div variants={slideUp}>
-                            <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-brand-100/10">
-                              <CardHeader className="border-b border-brand-100/20 pb-4">
-                                <CardTitle className="text-xl text-brand-200">Company Overview</CardTitle>
-                                <CardDescription>Key information about your business</CardDescription>
-                              </CardHeader>
-                              <CardContent className="pt-6">
-                                <div className="grid md:grid-cols-2 gap-6">
-                                  <div className="p-4 rounded-lg bg-brand-100/5 border border-brand-100/20">
-                                    <div className="flex items-center gap-3 mb-4">
-                                      <Building2 className="h-5 w-5 text-brand-200" />
-                                      <h3 className="text-sm font-semibold text-brand-200">Business Profile</h3>
-                                    </div>
-                                    <div className="space-y-3">
-                                      <div className="flex justify-between items-center">
-                                        <span className="text-sm text-muted-foreground">Main Products</span>
-                                        <span className="text-sm font-medium">{company?.main_products?.join(', ') || "Not Set"}</span>
-                                      </div>
-                                      <div className="flex justify-between items-center">
-                                        <span className="text-sm text-muted-foreground">Total Employees</span>
-                                        <span className="text-sm font-medium">{company?.employee_count?.toString() || "Not Set"}</span>
-                                      </div>
-                                      <div className="flex justify-between items-center">
-                                        <span className="text-sm text-muted-foreground">Years Exporting</span>
-                                        <span className="text-sm font-medium">{company?.year_established ? new Date(company.year_established).getFullYear() : "Not Set"}</span>
+                                    <div className="p-4 rounded-lg bg-brand-100/5 border border-brand-100/20">
+                                      <h3 className="text-sm font-semibold text-brand-200 mb-4">Contact Information</h3>
+                                      <div className="space-y-3">
+                                        <div className="flex justify-between items-center">
+                                          <span className="text-sm text-muted-foreground">Address</span>
+                                          <span className="text-sm font-medium">{company?.address || "Not Set"}</span>
+                                        </div>
+                                        <div className="flex justify-between items-center">
+                                          <span className="text-sm text-muted-foreground">Website</span>
+                                          {company?.website ? (
+                                            <a 
+                                              href={company.website}
+                                              target="_blank"
+                                              rel="noopener noreferrer"
+                                              className="text-sm font-medium text-brand-200 hover:text-brand-300 transition-colors"
+                                            >
+                                              {company.website}
+                                            </a>
+                                          ) : (
+                                            <span className="text-sm font-medium">Not Set</span>
+                                          )}
+                                        </div>
                                       </div>
                                     </div>
-                                  </div>
-
-                                  <div className="p-4 rounded-lg bg-brand-100/5 border border-brand-100/20">
-                                    <div className="flex items-center gap-3 mb-4">
-                                      <Globe className="h-5 w-5 text-brand-200" />
-                                      <h3 className="text-sm font-semibold text-brand-200">Company Description</h3>
-                                    </div>
-                                    <p className="text-sm text-muted-foreground leading-relaxed">
-                                      {company?.description || "Not Set"}
-                                    </p>
                                   </div>
                                 </div>
                               </CardContent>
@@ -1269,29 +1195,33 @@ export default function ProfilePage() {
                                       <div className="flex justify-between items-center">
                                         <span className="text-sm text-muted-foreground">Factory Size</span>
                                         <span className="text-sm font-medium">
-                                          {parseJsonField<ProductionCapacity>(company?.production_capacity || null, {} as ProductionCapacity)?.factorySize 
-                                            ? `${parseJsonField<ProductionCapacity>(company?.production_capacity || null, {} as ProductionCapacity)?.factorySize} sqm` 
+                                          {parseJsonField<ProductionCapacity>(company?.production_capacity, {} as ProductionCapacity)?.factorySize 
+                                            ? `${parseJsonField<ProductionCapacity>(company?.production_capacity, {} as ProductionCapacity)?.factorySize} sqm` 
                                             : "Not Set"}
                                         </span>
                                       </div>
                                       <div className="flex justify-between items-center">
                                         <span className="text-sm text-muted-foreground">Annual Output</span>
                                         <span className="text-sm font-medium">
-                                          {parseJsonField<ProductionCapacity>(company?.production_capacity || null, {} as ProductionCapacity)?.annualOutput 
-                                            ? `${parseJsonField<ProductionCapacity>(company?.production_capacity || null, {} as ProductionCapacity)?.annualOutput} units` 
+                                          {parseJsonField<ProductionCapacity>(company?.production_capacity, {} as ProductionCapacity)?.annualOutput 
+                                            ? `${parseJsonField<ProductionCapacity>(company?.production_capacity, {} as ProductionCapacity)?.annualOutput} units` 
                                             : "Not Set"}
                                         </span>
                                       </div>
                                       <div className="flex justify-between items-center">
                                         <span className="text-sm text-muted-foreground">Production Lines</span>
                                         <span className="text-sm font-medium">
-                                          {parseJsonField<ProductionCapacity>(company?.production_capacity || null, {} as ProductionCapacity)?.productionLines || "Not Set"}
+                                          {parseJsonField<ProductionCapacity>(company?.production_capacity, {} as ProductionCapacity)?.productionLines 
+                                            ? parseJsonField<ProductionCapacity>(company?.production_capacity, {} as ProductionCapacity)?.productionLines 
+                                            : "Not Set"}
                                         </span>
                                       </div>
                                       <div className="flex justify-between items-center">
                                         <span className="text-sm text-muted-foreground">QC Staff</span>
                                         <span className="text-sm font-medium">
-                                          {parseJsonField<ProductionCapacity>(company?.production_capacity || null, {} as ProductionCapacity)?.qualityControlStaff || "Not Set"}
+                                          {parseJsonField<ProductionCapacity>(company?.production_capacity, {} as ProductionCapacity)?.qualityControlStaff 
+                                            ? parseJsonField<ProductionCapacity>(company?.production_capacity, {} as ProductionCapacity)?.qualityControlStaff 
+                                            : "Not Set"}
                                         </span>
                                       </div>
                                     </div>
@@ -1430,33 +1360,18 @@ export default function ProfilePage() {
         )}
       </motion.div>
 
-      <EditDialog
+      <ProfileForm
         open={editProfileOpen}
         onOpenChange={setEditProfileOpen}
-        title="Edit Profile"
-        description="Update your personal information"
-        fields={updatedProfileFields}
-        schema={ProfileSchema}
         onSubmit={handleProfileUpdate}
-        initialData={{
-          first_name: profile.first_name,
-          last_name: profile.last_name,
-          email: profile.email,
-          phone_number: profile.phone_number,
-          business_category: profile.business_category,
-          designation: profile.designation
-        }}
+        profile={profile}
+        categoryOptions={categoryOptions}
       />
 
-      <EditDialog
+      <CompanyForm
         open={editCompanyOpen}
         onOpenChange={setEditCompanyOpen}
-        title="Edit Company Details"
-        description="Update your company information"
-        fields={companyFormFields}
-        schema={CompanySchema}
         onSubmit={handleCompanyUpdate}
-        initialData={transformedCompanyData}
         loading={loading}
       />
 

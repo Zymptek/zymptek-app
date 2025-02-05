@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
@@ -18,11 +19,8 @@ import {
   X, 
   ArrowRight, 
   FileText,
-  Building2,
   Calendar,
-  AlertCircle
 } from "lucide-react";
-import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 import { motion } from "framer-motion";
 
@@ -38,6 +36,18 @@ interface VerificationTask {
   document_count: number;
 }
 
+// Add database response type
+interface VerificationRecord {
+  id: string;
+  company_id: string;
+  status: 'not_applied' | 'applied' | 'pending' | 'approved' | 'rejected';
+  submitted_at: string;
+  company: {
+    name: string;
+    business_category: string | null;
+  }[];
+}
+
 type FilterStatus = 'pending' | 'approved' | 'rejected' | 'all';
 
 export default function VerificationsPage() {
@@ -45,6 +55,7 @@ export default function VerificationsPage() {
   const [loading, setLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState<FilterStatus>('pending');
   const [allTasks, setAllTasks] = useState<VerificationTask[]>([]);
+  const supabase = createClientComponentClient();
 
   useEffect(() => {
     const loadTasks = async () => {
@@ -95,7 +106,7 @@ export default function VerificationsPage() {
             task.status != null &&
             task.submitted_at != null &&
             task.company != null &&
-            task.company.name != null
+            task.company.length > 0
           )
           .map(task => ({
             ...task,
@@ -103,8 +114,8 @@ export default function VerificationsPage() {
             status: task.status!,
             submitted_at: task.submitted_at!,
             company: {
-              name: task.company!.name!,
-              business_category: task.company!.business_category
+              name: task.company[0]?.name || '',
+              business_category: task.company[0]?.business_category || null
             },
             document_count: documentCounts ? 
               documentCounts.filter(doc => doc.company_id === task.company_id).length : 

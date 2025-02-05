@@ -12,8 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { DOCUMENT_CONFIG, validateFile } from "@/lib/config/documents";
 import { handleDocumentStorage, updateCompanyDocument, fetchCompanyDocuments, handleSubmitAllDocuments } from "@/lib/utils/document-handler";
-import type { Database } from '@/lib/database.types';
-import { supabase } from "@/lib/supabase";
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 
 type VerificationStatus = 'not_applied' | 'applied' | 'pending' | 'approved' | 'rejected';
 
@@ -60,7 +59,7 @@ export default function VerifyPage() {
   const [previewError, setPreviewError] = useState(false);
   const [verificationRecord, setVerificationRecord] = useState<any>(null);
   const { toast } = useToast();
-
+  const supabase = createClientComponentClient();
   // Load verification record
   useEffect(() => {
     const loadVerificationRecord = async () => {
@@ -177,9 +176,9 @@ export default function VerifyPage() {
       });
 
       // Validate file
-      const validationErrors = validateFile(file, config);
-      if (validationErrors.length > 0) {
-        throw new Error(validationErrors.join(', '));
+      const validationError = validateFile(file, config);
+      if (validationError !== null) {
+        throw new Error(validationError);
       }
 
       // Create temporary preview URL

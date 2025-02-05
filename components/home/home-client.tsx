@@ -85,7 +85,13 @@ export default function HomeClient({
               }}
               transition={{ duration: 0.8, ease: 'easeInOut' }}
             >
-              <Image src={banner.image} alt={banner.title} layout="fill" objectFit="cover" />
+              <Image 
+                src={banner.image} 
+                alt={banner.title} 
+                fill
+                className="object-cover"
+                priority={index === 0}
+              />
               <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
                 <div className="text-white text-center max-w-2xl px-4">
                   <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-2 md:mb-4">{banner.title}</h2>

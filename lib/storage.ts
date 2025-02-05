@@ -1,10 +1,12 @@
-import { supabase } from './supabase';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import type { Database } from './database.types';
 
 export const uploadObject = async (
   bucket: string,
   path: string,
   file: File
 ): Promise<{ url: string | null; error: Error | null }> => {
+  const supabase = createClientComponentClient<Database>();
   try {
     const { error: uploadError } = await supabase.storage
       .from(bucket)
@@ -26,6 +28,7 @@ export const uploadObject = async (
 };
 
 export const deleteObject = async (url: string): Promise<boolean> => {
+  const supabase = createClientComponentClient<Database>();
   try {
     // Extract path from public URL
     const urlObj = new URL(url);
