@@ -13,6 +13,7 @@ import ProductCard from '@/components/home/ProductCard';
 import { Tables } from '@/lib/database.types';
 import { blogPosts } from '@/lib/data/blog-posts';
 import BlogCard from '@/components/blog/blog-card';
+import NewsletterForm from '@/components/home/newsletter-form';
 
 type Product = Tables<'products'> & {
   shipping_info: {
@@ -44,6 +45,7 @@ export default function HomeClient({
     { image: '/banner3.png', title: 'Expand Your Global Reach', description: 'Tap into the potential of Indian markets' },
   ];
 
+  /* Temporarily Hidden Testimonials
   const testimonials = [
     { id: 1, name: 'John Doe', company: 'ABC Corp', text: 'Zymptek has revolutionized our sourcing process. The quality of products and reliability of suppliers is unmatched.', avatar: 'https://i.pravatar.cc/150?img=1' },
     { id: 2, name: 'Jane Smith', company: 'XYZ Industries', text: 'We\'ve seen a 30% increase in our profit margins since we started using Zymptek. Highly recommended!', avatar: 'https://i.pravatar.cc/150?img=2' },
@@ -54,6 +56,7 @@ export default function HomeClient({
     { id: 7, name: 'David Martinez', company: 'Global Foods Co.', text: 'The diversity of products available on Zymptek is unparalleled. It\'s our go-to platform for all our import needs.', avatar: 'https://i.pravatar.cc/150?img=7' },
     { id: 8, name: 'Lisa Taylor', company: 'Eco Friendly Packaging', text: 'Zymptek\'s commitment to sustainability aligns perfectly with our company values. They\'ve helped us find eco-friendly suppliers easily.', avatar: 'https://i.pravatar.cc/150?img=8' },
   ];
+  */
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -347,8 +350,8 @@ export default function HomeClient({
         </div>
       </motion.section> */}
 
-      {/* Testimonials Section */}
-      <motion.section 
+      {/* Testimonials Section - Temporarily Hidden */}
+      {/* <motion.section 
         className="mb-8 md:mb-16 mx-4 md:mx-10 px-4 py-12 md:py-16" 
         initial={{ opacity: 0, y: 20 }} 
         animate={{ opacity: 1, y: 0 }} 
@@ -439,7 +442,7 @@ export default function HomeClient({
             </SwiperSlide>
           ))}
         </Swiper>
-      </motion.section>
+      </motion.section> */}
 
       {/* Newsletter Section - Modified for Production */}
       <section className="mx-4 md:mx-10 px-4 py-8 md:py-12">
@@ -456,32 +459,7 @@ export default function HomeClient({
           <div className="bg-white p-6 md:p-8 rounded-lg shadow-md">
             <h3 className="text-lg md:text-xl font-semibold mb-3 md:mb-4 text-brand-200">Join Our Business Network</h3>
             <p className="mb-4 md:mb-6 text-brand-300">Get updates on new suppliers, industry insights, and market opportunities.</p>
-            <form className="flex flex-col md:flex-row gap-4">
-              <input 
-                type="email" 
-                placeholder="Enter your business email" 
-                className="flex-grow px-4 py-2 rounded-lg border text-brand-300 border-brand-200 bg-white focus:outline-none focus:ring-2 focus:ring-brand-100"
-              />
-              <button 
-                className="inline-flex items-center justify-center px-6 py-2 bg-brand-200 text-white font-semibold rounded-lg hover:bg-brand-300 transform hover:scale-105 transition-all duration-200 shadow hover:shadow-md whitespace-nowrap"
-              >
-                <span>Subscribe</span>
-                <svg 
-                  className="ml-2 w-4 h-4" 
-                  fill="none" 
-                  stroke="currentColor" 
-                  viewBox="0 0 24 24" 
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path 
-                    strokeLinecap="round" 
-                    strokeLinejoin="round" 
-                    strokeWidth="2" 
-                    d="M14 5l7 7m0 0l-7 7m7-7H3"
-                  />
-                </svg>
-              </button>
-            </form>
+            <NewsletterForm />
           </div>
         </motion.section>
       </section>
