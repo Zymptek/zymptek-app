@@ -13,6 +13,7 @@ import ProductCard from '@/components/home/ProductCard';
 import { Tables } from '@/lib/database.types';
 import { blogPosts } from '@/lib/data/blog-posts';
 import BlogCard from '@/components/blog/blog-card';
+import NewsletterForm from '@/components/home/newsletter-form';
 
 type Product = Tables<'products'> & {
   shipping_info: {
@@ -40,10 +41,11 @@ export default function HomeClient({
 
   const banners = [
     { image: '/banner.png', title: 'Connect with Indian Exporters', description: 'Access a wide range of high-quality products' },
-    { image: '/banner2.png', title: 'Exclusive B2B Deals', description: 'Save up to 40% on bulk orders' },
+    { image: '/banner2.png', title: 'Premium B2B Platform', description: 'Connecting global buyers with verified Indian manufacturers' },
     { image: '/banner3.png', title: 'Expand Your Global Reach', description: 'Tap into the potential of Indian markets' },
   ];
 
+  /* Temporarily Hidden Testimonials
   const testimonials = [
     { id: 1, name: 'John Doe', company: 'ABC Corp', text: 'Zymptek has revolutionized our sourcing process. The quality of products and reliability of suppliers is unmatched.', avatar: 'https://i.pravatar.cc/150?img=1' },
     { id: 2, name: 'Jane Smith', company: 'XYZ Industries', text: 'We\'ve seen a 30% increase in our profit margins since we started using Zymptek. Highly recommended!', avatar: 'https://i.pravatar.cc/150?img=2' },
@@ -54,6 +56,7 @@ export default function HomeClient({
     { id: 7, name: 'David Martinez', company: 'Global Foods Co.', text: 'The diversity of products available on Zymptek is unparalleled. It\'s our go-to platform for all our import needs.', avatar: 'https://i.pravatar.cc/150?img=7' },
     { id: 8, name: 'Lisa Taylor', company: 'Eco Friendly Packaging', text: 'Zymptek\'s commitment to sustainability aligns perfectly with our company values. They\'ve helped us find eco-friendly suppliers easily.', avatar: 'https://i.pravatar.cc/150?img=8' },
   ];
+  */
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -156,25 +159,8 @@ export default function HomeClient({
         </div>
       </section>
 
-      <motion.section className="mb-8 md:mb-16 mx-4 md:mx-10 px-4 py-8 md:py-12" variants={staggerChildren} initial="initial" animate="animate">
-        <h2 className="text-2xl md:text-3xl font-bold mb-6 md:mb-8 text-brand-200">Featured Products</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-8">
-          {initialProducts.map((product) => (
-            <motion.div 
-              key={product.product_id} 
-              initial={{ opacity: 0, y: 20 }} 
-              animate={{ opacity: 1, y: 0 }} 
-              transition={{ duration: 0.5 }}
-              whileHover={{ scale: 1.05 }}
-            >
-              <ProductCard product={product} />
-            </motion.div>
-          ))}
-        </div>
-      </motion.section>
-
-      {/* Hot Deals Section */}
-      <motion.section className="mb-8 md:mb-16" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+      {/* Hot Deals Section - Temporarily Removed */}
+      {/* <motion.section className="mb-8 md:mb-16" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
         <div className="bg-brand-500 p-6 md:p-8 shadow-md">
           <h2 className="text-2xl md:text-3xl font-bold mb-4 md:mb-6 text-brand-200">🔥 Hot Deals</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
@@ -194,32 +180,85 @@ export default function HomeClient({
             </div>
           </div>
         </div>
-      </motion.section>
+      </motion.section> */}
 
       {/* Why Choose Zymptek Section */}
       <motion.section className="mb-8 md:mb-16 mx-4 md:mx-10 px-4 py-8 md:py-12" variants={staggerChildren} initial="initial" animate="animate">
-        <h2 className="text-2xl md:text-3xl font-bold mb-6 md:mb-8 text-brand-200">Why Choose Zymptek?</h2>
+        <div className="text-center mb-10">
+          <h2 className="text-2xl md:text-3xl font-bold mb-4 text-brand-200">Why Choose Zymptek?</h2>
+          <p className="text-brand-300 text-lg max-w-2xl mx-auto">Experience the future of B2B trade with our comprehensive platform</p>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
-          <motion.div className="bg-white p-5 md:p-6 rounded-lg shadow-md" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} whileHover={{ scale: 1.05 }}>
-            <h3 className="text-lg md:text-xl font-semibold mb-3 md:mb-4 text-brand-200">Verified Suppliers</h3>
-            <p className="mb-3 md:mb-4 text-brand-300">All our suppliers undergo a rigorous verification process to ensure quality and reliability.</p>
-            <Link href="/our-process" className="text-brand-200 hover:underline">Learn about our verification process</Link>
+          <motion.div 
+            className="bg-gradient-to-br from-white to-brand-50 p-8 rounded-2xl shadow-lg border border-brand-100/20" 
+            initial={{ opacity: 0, y: 20 }} 
+            animate={{ opacity: 1, y: 0 }} 
+            transition={{ duration: 0.5 }} 
+            whileHover={{ 
+              scale: 1.02,
+              boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)"
+            }}
+          >
+            <div className="relative">
+              <div className="absolute -top-2 -left-2 w-16 h-16 bg-brand-100/10 rounded-2xl transform rotate-6"></div>
+              <div className="relative z-10 flex items-center justify-center w-14 h-14 mb-6 rounded-2xl bg-gradient-to-br from-brand-200 to-brand-300 text-white shadow-lg">
+                <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                </svg>
+              </div>
+            </div>
+            <h3 className="text-xl font-bold mb-4 text-brand-200">Verified Suppliers</h3>
+            <p className="text-brand-300 leading-relaxed">Our rigorous verification process ensures all suppliers meet international quality standards, compliance requirements, and business reliability criteria.</p>
           </motion.div>
-          <motion.div className="bg-white p-5 md:p-6 rounded-lg shadow-md" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} whileHover={{ scale: 1.05 }}>
-            <h3 className="text-lg md:text-xl font-semibold mb-3 md:mb-4 text-brand-200">Secure Transactions</h3>
-            <p className="mb-3 md:mb-4 text-brand-300">Our platform ensures safe and secure transactions for all your B2B needs.</p>
-            <Link href="/security" className="text-brand-200 hover:underline">View our security measures</Link>
+
+          <motion.div 
+            className="bg-gradient-to-br from-white to-brand-50 p-8 rounded-2xl shadow-lg border border-brand-100/20" 
+            initial={{ opacity: 0, y: 20 }} 
+            animate={{ opacity: 1, y: 0 }} 
+            transition={{ duration: 0.5, delay: 0.1 }} 
+            whileHover={{ 
+              scale: 1.02,
+              boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)"
+            }}
+          >
+            <div className="relative">
+              <div className="absolute -top-2 -left-2 w-16 h-16 bg-brand-100/10 rounded-2xl transform -rotate-6"></div>
+              <div className="relative z-10 flex items-center justify-center w-14 h-14 mb-6 rounded-2xl bg-gradient-to-br from-brand-200 to-brand-300 text-white shadow-lg">
+                <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+              </div>
+            </div>
+            <h3 className="text-xl font-bold mb-4 text-brand-200">Secure Transactions</h3>
+            <p className="text-brand-300 leading-relaxed">End-to-end encrypted platform with secure payment gateways, escrow services, and comprehensive trade protection measures for safe B2B transactions.</p>
           </motion.div>
-          <motion.div className="bg-white p-5 md:p-6 rounded-lg shadow-md" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} whileHover={{ scale: 1.05 }}>
-            <h3 className="text-lg md:text-xl font-semibold mb-3 md:mb-4 text-brand-200">24/7 Support</h3>
-            <p className="mb-3 md:mb-4 text-brand-300">Our dedicated support team is always ready to assist you with any queries or issues.</p>
-            <Link href="/contact" className="text-brand-200 hover:underline">Contact our support team</Link>
+
+          <motion.div 
+            className="bg-gradient-to-br from-white to-brand-50 p-8 rounded-2xl shadow-lg border border-brand-100/20" 
+            initial={{ opacity: 0, y: 20 }} 
+            animate={{ opacity: 1, y: 0 }} 
+            transition={{ duration: 0.5, delay: 0.2 }} 
+            whileHover={{ 
+              scale: 1.02,
+              boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)"
+            }}
+          >
+            <div className="relative">
+              <div className="absolute -top-2 -left-2 w-16 h-16 bg-brand-100/10 rounded-2xl transform rotate-12"></div>
+              <div className="relative z-10 flex items-center justify-center w-14 h-14 mb-6 rounded-2xl bg-gradient-to-br from-brand-200 to-brand-300 text-white shadow-lg">
+                <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+              </div>
+            </div>
+            <h3 className="text-xl font-bold mb-4 text-brand-200">24/7 Support</h3>
+            <p className="text-brand-300 leading-relaxed">Dedicated multilingual support team available round-the-clock to assist with sourcing, negotiations, and trade logistics across all time zones.</p>
           </motion.div>
         </div>
       </motion.section>
 
-      {/* Blog Section */}
-      <motion.section className="mb-8 md:mb-16 mx-4 md:mx-10 px-4 py-8 md:py-12" variants={staggerChildren} initial="initial" animate="animate">
+      {/* Blog Section - Temporarily Hidden */}
+      {/* <motion.section className="mb-8 md:mb-16 mx-4 md:mx-10 px-4 py-8 md:py-12" variants={staggerChildren} initial="initial" animate="animate">
         <h2 className="text-2xl md:text-3xl font-bold mb-6 md:mb-8 text-brand-200">Why Choose Indian Products?</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
           <motion.div className="bg-white rounded-lg shadow-md overflow-hidden h-[500px] flex flex-col" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} whileHover={{ scale: 1.05 }}>
@@ -309,42 +348,103 @@ export default function HomeClient({
             </div>
           </motion.div>
         </div>
-      </motion.section>
+      </motion.section> */}
 
-      {/* Testimonials Section */}
-      <motion.section className="mb-8 md:mb-16 mx-4 md:mx-10 px-4 py-8 md:py-12" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-        <h2 className="text-2xl md:text-3xl font-bold mb-6 md:mb-8 text-brand-200">What Our Clients Say</h2>
+      {/* Testimonials Section - Temporarily Hidden */}
+      {/* <motion.section 
+        className="mb-8 md:mb-16 mx-4 md:mx-10 px-4 py-12 md:py-16" 
+        initial={{ opacity: 0, y: 20 }} 
+        animate={{ opacity: 1, y: 0 }} 
+        transition={{ duration: 0.5 }}
+      >
+        <div className="text-center mb-10">
+          <h2 className="text-2xl md:text-3xl font-bold mb-4 text-brand-200">What Our Clients Say</h2>
+          <p className="text-brand-300 text-lg max-w-2xl mx-auto">
+            Join thousands of satisfied businesses who trust Zymptek for their international trade needs
+          </p>
+        </div>
         <Swiper
           modules={[Navigation, Pagination, Autoplay]}
-          spaceBetween={20}
+          spaceBetween={24}
           slidesPerView={1}
-          autoplay={{ delay: 5000 }}
+          autoplay={{ delay: 5000, disableOnInteraction: false }}
           loop={true}
+          pagination={{ clickable: true }}
           breakpoints={{
             640: {
               slidesPerView: 2,
-              spaceBetween: 30,
+              spaceBetween: 24,
             },
             1024: {
               slidesPerView: 3,
-              spaceBetween: 30,
+              spaceBetween: 32,
             },
           }}
+          className="testimonials-swiper !pb-12"
         >
           {testimonials.map((testimonial, index) => (
             <SwiperSlide key={index}>
-              <motion.div className="bg-white p-5 md:p-6 rounded-lg shadow-md flex flex-col items-center text-center" whileHover={{ scale: 1.05 }}>
-                <Image src={testimonial.avatar} alt={testimonial.name} width={60} height={60} className="rounded-full mb-3 md:mb-4" />
-                <p className="mb-3 md:mb-4 italic text-brand-300 text-sm md:text-base">"{testimonial.text}"</p>
-                <p className="font-semibold text-brand-200">{testimonial.name}</p>
-                <p className="text-xs md:text-sm text-brand-300">{testimonial.company}</p>
+              <motion.div 
+                className="bg-gradient-to-br from-white to-brand-50 p-6 md:p-8 rounded-2xl shadow-lg border border-brand-100/20 h-[360px] flex flex-col"
+                whileHover={{ 
+                  scale: 1.02,
+                  boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)"
+                }}
+              >
+                <div className="flex items-start">
+                  <div className="relative">
+                    <div className="absolute -top-2 -left-2 w-16 h-16 bg-brand-100/10 rounded-full"></div>
+                    <Image 
+                      src={testimonial.avatar} 
+                      alt={testimonial.name} 
+                      width={56} 
+                      height={56} 
+                      className="rounded-full border-4 border-white shadow-md relative z-10" 
+                    />
+                  </div>
+                  <div className="ml-4 flex-grow">
+                    <p className="font-bold text-brand-200">{testimonial.name}</p>
+                    <p className="text-sm text-brand-300">{testimonial.company}</p>
+                  </div>
+                  <svg className="w-8 h-8 text-brand-200/20" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z" />
+                  </svg>
+                </div>
+                <div className="mt-6 flex-grow">
+                  <p className="text-brand-300 leading-relaxed line-clamp-6">"{testimonial.text}"</p>
+                </div>
+                <div className="flex items-center justify-between pt-4 border-t border-brand-100/20">
+                  <div className="flex text-yellow-400">
+                    {[...Array(5)].map((_, i) => (
+                      <svg key={i} className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                      </svg>
+                    ))}
+                  </div>
+                  <div className="flex items-center gap-1.5 bg-brand-100/10 px-3 py-1.5 rounded-full">
+                    <svg 
+                      className="w-4 h-4 text-brand-200" 
+                      fill="none" 
+                      stroke="currentColor" 
+                      viewBox="0 0 24 24"
+                    >
+                      <path 
+                        strokeLinecap="round" 
+                        strokeLinejoin="round" 
+                        strokeWidth="2" 
+                        d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+                      />
+                    </svg>
+                    <span className="text-sm font-medium text-brand-200">Verified</span>
+                  </div>
+                </div>
               </motion.div>
             </SwiperSlide>
           ))}
         </Swiper>
-      </motion.section>
+      </motion.section> */}
 
-      {/* Newsletter Section */}
+      {/* Newsletter Section - Modified for Production */}
       <section className="mx-4 md:mx-10 px-4 py-8 md:py-12">
         <motion.section
           variants={{
@@ -355,14 +455,11 @@ export default function HomeClient({
           animate="animate"
           transition={{ duration: 0.5 }}
         >
-          <h2 className="text-2xl md:text-3xl font-bold mb-6 md:mb-8 text-brand-200">Stay Informed</h2>
+          <h2 className="text-2xl md:text-3xl font-bold mb-6 md:mb-8 text-brand-200">Stay Connected</h2>
           <div className="bg-white p-6 md:p-8 rounded-lg shadow-md">
-            <h3 className="text-lg md:text-xl font-semibold mb-3 md:mb-4 text-brand-200">Subscribe to Our Newsletter</h3>
-            <p className="mb-4 md:mb-6 text-brand-300">Stay updated with the latest trends, deals, and insights in the B2B world.</p>
-            <form className="flex flex-col md:flex-row">
-              <input type="email" placeholder="Enter your email" className="flex-grow px-4 py-2 mb-4 md:mb-0 md:mr-4 rounded-lg border text-brand-300 border-brand-200 bg-white" />
-              <button className="btn btn-primary">Subscribe</button>
-            </form>
+            <h3 className="text-lg md:text-xl font-semibold mb-3 md:mb-4 text-brand-200">Join Our Business Network</h3>
+            <p className="mb-4 md:mb-6 text-brand-300">Get updates on new suppliers, industry insights, and market opportunities.</p>
+            <NewsletterForm />
           </div>
         </motion.section>
       </section>
