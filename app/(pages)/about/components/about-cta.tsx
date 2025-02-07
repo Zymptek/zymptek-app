@@ -3,8 +3,13 @@
 import { Card, CardContent } from "@/components/ui/card"
 import { GetStartedButton } from "./get-started-button"
 import { motion } from "framer-motion"
+import { AboutCTAData } from '@/lib/data/about'
 
-export default function AboutCTA() {
+interface AboutCTAProps {
+  data: AboutCTAData
+}
+
+export default function AboutCTA({ data }: AboutCTAProps) {
   return (
     <section className="container py-16 md:py-24">
       <motion.div

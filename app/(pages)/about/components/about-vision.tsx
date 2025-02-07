@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion"
 import { Target, Lightbulb, Users, Globe2 } from "lucide-react"
+import { AboutVisionData } from '@/lib/data/about'
 
 interface VisionCardProps {
   icon: React.ReactNode
@@ -10,7 +11,25 @@ interface VisionCardProps {
   delay?: number
 }
 
-export default function AboutVision() {
+interface AboutVisionProps {
+  data: AboutVisionData
+}
+
+const visionIcons = [
+  <Target className="w-8 h-8" />,
+  <Lightbulb className="w-8 h-8" />,
+  <Users className="w-8 h-8" />,
+  <Globe2 className="w-8 h-8" />
+];
+
+export default function AboutVision({ data }: AboutVisionProps) {
+  const itemCount = data.points.length;
+  const gridCols = itemCount === 3 
+    ? 'md:grid-cols-3' 
+    : itemCount === 2 
+      ? 'md:grid-cols-2' 
+      : 'md:grid-cols-2 lg:grid-cols-4';
+
   return (
     <section id="about-vision" className="relative py-16 md:py-24 overflow-hidden">
       {/* Background Pattern */}
@@ -23,9 +42,9 @@ export default function AboutVision() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
-            className="inline-flex items-center px-6 py-2 rounded-full bg-brand-100/10 border border-brand-200/20 shadow-sm mb-6"
+            className="inline-flex items-center px-8 py-3 rounded-full bg-brand-100/10 border border-brand-200/20 shadow-sm mb-8"
           >
-            <span className="text-sm font-medium text-brand-200 tracking-wide uppercase">Our Vision</span>
+            <span className="text-base font-semibold text-brand-200 tracking-wide uppercase">Our Vision</span>
           </motion.div>
 
           <motion.h2
@@ -46,36 +65,20 @@ export default function AboutVision() {
             transition={{ duration: 0.5, delay: 0.2 }}
             className="text-xl text-brand-400 leading-relaxed"
           >
-            We envision a future where international trade is as seamless as local commerce, 
-            powered by cutting-edge technology and built on trust.
+            {data.description}
           </motion.p>
         </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-          <VisionCard
-            icon={<Target className="w-8 h-8" />}
-            title="Mission"
-            description="To simplify global trade by connecting quality Indian manufacturers with international buyers through innovative technology."
-            delay={0.2}
-          />
-          <VisionCard
-            icon={<Lightbulb className="w-8 h-8" />}
-            title="Innovation"
-            description="Leveraging cutting-edge technology to create efficient, transparent, and secure trading processes."
-            delay={0.3}
-          />
-          <VisionCard
-            icon={<Users className="w-8 h-8" />}
-            title="Community"
-            description="Building a trusted network of verified manufacturers and buyers to foster long-term business relationships."
-            delay={0.4}
-          />
-          <VisionCard
-            icon={<Globe2 className="w-8 h-8" />}
-            title="Impact"
-            description="Empowering businesses globally while promoting sustainable and ethical trading practices."
-            delay={0.5}
-          />
+        <div className={`grid ${gridCols} gap-8`}>
+          {data.points.map((point, index) => (
+            <VisionCard
+              key={index}
+              icon={visionIcons[index]}
+              title={point.title}
+              description={point.description}
+              delay={0.2 + index * 0.1}
+            />
+          ))}
         </div>
       </div>
     </section>

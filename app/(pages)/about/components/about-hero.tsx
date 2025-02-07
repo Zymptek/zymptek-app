@@ -3,6 +3,7 @@
 import { motion } from "framer-motion"
 import { ArrowRight, CheckCircle2, ShieldCheck, Clock, Wallet } from "lucide-react"
 import { GetStartedButton } from "./get-started-button"
+import { AboutHeroData } from '@/lib/data/about'
 
 interface FeatureCardProps {
   icon: React.ReactNode
@@ -11,7 +12,11 @@ interface FeatureCardProps {
   delay?: number
 }
 
-export default function AboutHero() {
+interface AboutHeroProps {
+  data: AboutHeroData
+}
+
+export default function AboutHero({ data }: AboutHeroProps) {
   return (
     <section className="relative overflow-hidden bg-gradient-to-b from-background-light to-white">
       {/* Animated background pattern */}
@@ -53,7 +58,7 @@ export default function AboutHero() {
                   className="inline-flex items-center px-6 py-2 rounded-full bg-brand-100/10 border border-brand-200/20 shadow-sm hover:shadow-md transition-all duration-300"
                 >
                   <span className="w-2 h-2 rounded-full bg-brand-200 animate-pulse mr-2"></span>
-                  <span className="text-sm font-medium text-brand-200 tracking-wide uppercase">About Zymptek</span>
+                  <span className="text-sm font-medium text-brand-200 tracking-wide uppercase">{data.subtitle}</span>
                 </motion.div>
 
                 <motion.h1
@@ -81,7 +86,7 @@ export default function AboutHero() {
                   transition={{ delay: 0.4, duration: 0.5 }}
                   className="text-xl md:text-2xl text-brand-400 leading-relaxed max-w-2xl font-light"
                 >
-                  At Zymptek, we're bridging the gap between global buyers and Indian manufacturers, creating a seamless ecosystem powered by trust, technology, and transparency.
+                  {data.description}
                 </motion.p>
 
                 <motion.div
@@ -122,30 +127,15 @@ export default function AboutHero() {
                   className="relative bg-white/80 backdrop-blur-sm rounded-3xl p-8 shadow-2xl border border-brand-100/20 futuristic-border"
                 >
                   <div className="grid gap-8">
-                    <FeatureCard
-                      icon={<ShieldCheck className="w-7 h-7 text-brand-200" />}
-                      label="Verified Suppliers"
-                      description="Thoroughly vetted manufacturers ensuring quality and reliability"
-                      delay={0.3}
-                    />
-                    <FeatureCard
-                      icon={<Wallet className="w-7 h-7 text-brand-200" />}
-                      label="Secure Escrow"
-                      description="Protected payments and guaranteed delivery through our escrow service"
-                      delay={0.35}
-                    />
-                    <FeatureCard
-                      icon={<CheckCircle2 className="w-7 h-7 text-brand-200" />}
-                      label="Quality Assurance"
-                      description="Rigorous quality control and inspection processes"
-                      delay={0.4}
-                    />
-                    <FeatureCard
-                      icon={<Clock className="w-7 h-7 text-brand-200" />}
-                      label="24/7 Support"
-                      description="Round-the-clock expert assistance for seamless trade"
-                      delay={0.45}
-                    />
+                    {data.features.map((feature, index) => (
+                      <FeatureCard
+                        key={index}
+                        icon={getFeatureIcon(feature.icon)}
+                        label={feature.label}
+                        description={feature.description}
+                        delay={0.3 + index * 0.05}
+                      />
+                    ))}
                   </div>
                 </motion.div>
               </motion.div>
@@ -155,6 +145,16 @@ export default function AboutHero() {
       </div>
     </section>
   )
+}
+
+function getFeatureIcon(iconName: string) {
+  const icons = {
+    'shield': <ShieldCheck className="w-7 h-7 text-brand-200" />,
+    'wallet': <Wallet className="w-7 h-7 text-brand-200" />,
+    'check': <CheckCircle2 className="w-7 h-7 text-brand-200" />,
+    'clock': <Clock className="w-7 h-7 text-brand-200" />
+  };
+  return icons[iconName as keyof typeof icons];
 }
 
 function FeatureCard({ icon, label, description, delay = 0 }: FeatureCardProps) {
