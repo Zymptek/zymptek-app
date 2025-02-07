@@ -5,6 +5,7 @@ import { Target, Lightbulb, Rocket } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
+import { AboutStoryData } from '@/lib/data/about'
 
 interface TimelineItemProps {
   icon: React.ReactNode
@@ -12,50 +13,6 @@ interface TimelineItemProps {
   description: string
   content: string
   index: number
-}
-
-interface TimelineConfig {
-  header: {
-    badge: string;
-    title: string;
-    highlightedText: string;
-    description: string;
-  };
-  items: {
-    icon: React.ReactNode;
-    title: string;
-    description: string;
-    content: string;
-  }[];
-}
-
-const timelineConfig: TimelineConfig = {
-  header: {
-    badge: "Our Story",
-    title: "Building the Future of",
-    highlightedText: "Global Trade",
-    description: "We're building Zymptek with a simple yet powerful vision: making international trade seamless, secure, and efficient for businesses worldwide."
-  },
-  items: [
-    {
-      icon: <Target className="w-6 h-6" />,
-      title: "The Challenge",
-      description: "Identifying the Gap",
-      content: "Born from firsthand experience with the challenges of global trade, we recognized that India's manufacturing potential wasn't being fully leveraged. Despite the country's enormous manufacturing capabilities, the lack of a reliable platform and trust issues in international trade were holding businesses back."
-    },
-    {
-      icon: <Lightbulb className="w-6 h-6" />,
-      title: "Our Solution",
-      description: "Bridging the Gap",
-      content: "At Zymptek, we're bridging this gap by combining strong relationships with innovative technology. We verify every manufacturer on our platform, secure transactions through escrow payments, and provide real-time updates at every step. Our goal is to make importing from India a worry-free experience for businesses worldwide."
-    },
-    {
-      icon: <Rocket className="w-6 h-6" />,
-      title: "The Future",
-      description: "Expanding Horizons",
-      content: "Starting with textiles, we're building a comprehensive platform where trust and transparency aren't just promises – they're built into every feature. We're expanding into automotive parts, wooden & handcrafted items, chemicals, and medical equipment, creating a seamless experience that prioritizes quality and reliability."
-    }
-  ]
 }
 
 function TimelineItem({ icon, title, description, content, index }: TimelineItemProps) {
@@ -159,7 +116,17 @@ function TimelineItem({ icon, title, description, content, index }: TimelineItem
   )
 }
 
-export function AboutStory() {
+interface AboutStoryProps {
+  data: AboutStoryData
+}
+
+const storyIcons = [
+  <Target className="w-6 h-6" />,
+  <Lightbulb className="w-6 h-6" />,
+  <Rocket className="w-6 h-6" />
+];
+
+export function AboutStory({ data }: AboutStoryProps) {
   return (
     <section className="relative py-24 overflow-hidden bg-background-light">
       {/* Background Pattern */}
@@ -173,8 +140,11 @@ export function AboutStory() {
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
           >
-            <Badge variant="outline" className="px-6 py-2 text-brand-200 border-brand-200/20 mb-6">
-              {timelineConfig.header.badge}
+            <Badge 
+              variant="outline" 
+              className="px-8 py-3 text-base font-semibold text-brand-200 border-brand-200/20 mb-8"
+            >
+              {data.header.badge}
             </Badge>
           </motion.div>
 
@@ -185,8 +155,8 @@ export function AboutStory() {
             transition={{ duration: 0.5, delay: 0.1 }}
             className="text-4xl md:text-5xl font-bold text-text-light mb-6"
           >
-            {timelineConfig.header.title}
-            <span className="text-brand-200 ml-2">{timelineConfig.header.highlightedText}</span>
+            {data.header.title}
+            <span className="text-brand-200 ml-2">{data.header.highlightedText}</span>
           </motion.h2>
 
           <motion.p
@@ -196,7 +166,7 @@ export function AboutStory() {
             transition={{ duration: 0.5, delay: 0.2 }}
             className="text-xl text-brand-400 leading-relaxed"
           >
-            {timelineConfig.header.description}
+            {data.header.description}
           </motion.p>
         </div>
 
@@ -209,10 +179,13 @@ export function AboutStory() {
           
           {/* Timeline Items */}
           <div className="relative text-brand-400 antialiased text-sm font-semibold">
-            {timelineConfig.items.map((item, index) => (
+            {data.items.map((item, index) => (
               <TimelineItem
                 key={index}
-                {...item}
+                icon={storyIcons[index % storyIcons.length]}
+                title={item.title}
+                description={item.description}
+                content={item.content}
                 index={index}
               />
             ))}
