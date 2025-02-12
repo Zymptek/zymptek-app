@@ -3,10 +3,14 @@
 import { Card, CardContent } from "@/components/ui/card"
 import { GetStartedButton } from "./get-started-button"
 import { motion } from "framer-motion"
-import { AboutCTAData } from '@/lib/data/about'
 
 interface AboutCTAProps {
-  data: AboutCTAData
+  data: {
+    cta_title: string
+    cta_description: string
+    cta_button_text: string
+    cta_button_link: string
+  }
 }
 
 export default function AboutCTA({ data }: AboutCTAProps) {
@@ -32,10 +36,10 @@ export default function AboutCTA({ data }: AboutCTAProps) {
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent'
                 }}>
-                  Join Us in Reshaping Global Commerce
+                  {data.cta_title}
                 </h2>
                 <p className="text-brand-400 text-lg max-w-2xl mx-auto leading-relaxed">
-                  Experience the future of international trade with Zymptek. Let's make global commerce simple, secure, and efficient together.
+                  {data.cta_description}
                 </p>
               </motion.div>
               
@@ -44,7 +48,10 @@ export default function AboutCTA({ data }: AboutCTAProps) {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4, duration: 0.5 }}
               >
-                <GetStartedButton href="/sign-up" />
+                <GetStartedButton 
+                  href={data.cta_button_link} 
+                  text={data.cta_button_text}
+                />
               </motion.div>
             </div>
             

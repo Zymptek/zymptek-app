@@ -3,7 +3,6 @@
 import { motion } from "framer-motion"
 import { ArrowRight, CheckCircle2, ShieldCheck, Clock, Wallet } from "lucide-react"
 import { GetStartedButton } from "./get-started-button"
-import { AboutHeroData } from '@/lib/data/about'
 
 interface FeatureCardProps {
   icon: React.ReactNode
@@ -12,11 +11,38 @@ interface FeatureCardProps {
   delay?: number
 }
 
+interface StrapiFeature {
+  id: number
+  icon: "shield" | "wallet" | "check" | "clock"
+  label: string
+  description: string
+}
+
 interface AboutHeroProps {
-  data: AboutHeroData
+  data: {
+    hero_title_start: string
+    hero_title_highlight: string
+    hero_title_end: string
+    hero_subtitle: string
+    hero_description: string
+    hero_features: StrapiFeature[]
+    cta_button_text: string
+    cta_button_link: string
+  }
 }
 
 export default function AboutHero({ data }: AboutHeroProps) {
+  const { 
+    hero_title_start,
+    hero_title_highlight,
+    hero_title_end,
+    hero_subtitle,
+    hero_description,
+    hero_features,
+    cta_button_text,
+    cta_button_link
+  } = data;
+
   return (
     <section className="relative overflow-hidden bg-gradient-to-b from-background-light to-white">
       {/* Animated background pattern */}
@@ -58,7 +84,7 @@ export default function AboutHero({ data }: AboutHeroProps) {
                   className="inline-flex items-center px-6 py-2 rounded-full bg-brand-100/10 border border-brand-200/20 shadow-sm hover:shadow-md transition-all duration-300"
                 >
                   <span className="w-2 h-2 rounded-full bg-brand-200 animate-pulse mr-2"></span>
-                  <span className="text-sm font-medium text-brand-200 tracking-wide uppercase">{data.subtitle}</span>
+                  <span className="text-sm font-medium text-brand-200 tracking-wide uppercase">{hero_subtitle}</span>
                 </motion.div>
 
                 <motion.h1
@@ -67,7 +93,7 @@ export default function AboutHero({ data }: AboutHeroProps) {
                   transition={{ delay: 0.3, duration: 0.5 }}
                   className="text-4xl md:text-5xl lg:text-7xl font-bold text-text-light tracking-tight leading-[1.1]"
                 >
-                  <span className="block mb-2">Revolutionizing</span>
+                  <span className="block mb-2">{hero_title_start}</span>
                   <span className="relative inline-block whitespace-nowrap mx-2">
                     <motion.div
                       initial={{ width: "0%" }}
@@ -75,9 +101,9 @@ export default function AboutHero({ data }: AboutHeroProps) {
                       transition={{ delay: 0.8, duration: 0.8 }}
                       className="absolute left-0 bottom-2 h-3 bg-brand-500/40 -z-10"
                     />
-                    <span className="text-brand-200">Global Trade</span>
+                    <span className="text-brand-200">{hero_title_highlight}</span>
                   </span>
-                  <span className="block mt-2">Through Innovation</span>
+                  <span className="block mt-2">{hero_title_end}</span>
                 </motion.h1>
 
                 <motion.p
@@ -86,7 +112,7 @@ export default function AboutHero({ data }: AboutHeroProps) {
                   transition={{ delay: 0.4, duration: 0.5 }}
                   className="text-xl md:text-2xl text-brand-400 leading-relaxed max-w-2xl font-light"
                 >
-                  {data.description}
+                  {hero_description}
                 </motion.p>
 
                 <motion.div
@@ -95,7 +121,10 @@ export default function AboutHero({ data }: AboutHeroProps) {
                   transition={{ delay: 0.5, duration: 0.5 }}
                   className="flex flex-wrap gap-6 pt-8"
                 >
-                  <GetStartedButton href="/sign-up" />
+                  <GetStartedButton 
+                    href={cta_button_link} 
+                    text={cta_button_text}
+                  />
                   <motion.button 
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
@@ -127,13 +156,13 @@ export default function AboutHero({ data }: AboutHeroProps) {
                   className="relative bg-white/80 backdrop-blur-sm rounded-3xl p-8 shadow-2xl border border-brand-100/20 futuristic-border"
                 >
                   <div className="grid gap-8">
-                    {data.features.map((feature, index) => (
+                    {hero_features.map((feature) => (
                       <FeatureCard
-                        key={index}
+                        key={feature.id}
                         icon={getFeatureIcon(feature.icon)}
                         label={feature.label}
                         description={feature.description}
-                        delay={0.3 + index * 0.05}
+                        delay={0.3}
                       />
                     ))}
                   </div>
@@ -147,14 +176,14 @@ export default function AboutHero({ data }: AboutHeroProps) {
   )
 }
 
-function getFeatureIcon(iconName: string) {
+function getFeatureIcon(iconName: "shield" | "wallet" | "check" | "clock") {
   const icons = {
     'shield': <ShieldCheck className="w-7 h-7 text-brand-200" />,
     'wallet': <Wallet className="w-7 h-7 text-brand-200" />,
     'check': <CheckCircle2 className="w-7 h-7 text-brand-200" />,
     'clock': <Clock className="w-7 h-7 text-brand-200" />
   };
-  return icons[iconName as keyof typeof icons];
+  return icons[iconName];
 }
 
 function FeatureCard({ icon, label, description, delay = 0 }: FeatureCardProps) {

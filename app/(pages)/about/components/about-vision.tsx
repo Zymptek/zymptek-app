@@ -2,7 +2,6 @@
 
 import { motion } from "framer-motion"
 import { Target, Lightbulb, Users, Globe2 } from "lucide-react"
-import { AboutVisionData } from '@/lib/data/about'
 
 interface VisionCardProps {
   icon: React.ReactNode
@@ -12,7 +11,15 @@ interface VisionCardProps {
 }
 
 interface AboutVisionProps {
-  data: AboutVisionData
+  data: {
+    vision_title: string
+    vision_description: string
+    vision_points: Array<{
+      id: number
+      title: string
+      description: string
+    }>
+  }
 }
 
 const visionIcons = [
@@ -23,7 +30,7 @@ const visionIcons = [
 ];
 
 export default function AboutVision({ data }: AboutVisionProps) {
-  const itemCount = data.points.length;
+  const itemCount = data.vision_points.length;
   const gridCols = itemCount === 3 
     ? 'md:grid-cols-3' 
     : itemCount === 2 
@@ -44,7 +51,7 @@ export default function AboutVision({ data }: AboutVisionProps) {
             transition={{ duration: 0.5 }}
             className="inline-flex items-center px-8 py-3 rounded-full bg-brand-100/10 border border-brand-200/20 shadow-sm mb-8"
           >
-            <span className="text-base font-semibold text-brand-200 tracking-wide uppercase">Our Vision</span>
+            <span className="text-base font-semibold text-brand-200 tracking-wide uppercase">{data.vision_title}</span>
           </motion.div>
 
           <motion.h2
@@ -65,14 +72,14 @@ export default function AboutVision({ data }: AboutVisionProps) {
             transition={{ duration: 0.5, delay: 0.2 }}
             className="text-xl text-brand-400 leading-relaxed"
           >
-            {data.description}
+            {data.vision_description}
           </motion.p>
         </div>
 
         <div className={`grid ${gridCols} gap-8`}>
-          {data.points.map((point, index) => (
+          {data.vision_points.map((point, index) => (
             <VisionCard
-              key={index}
+              key={point.id}
               icon={visionIcons[index]}
               title={point.title}
               description={point.description}
