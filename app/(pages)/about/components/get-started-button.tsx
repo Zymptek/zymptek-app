@@ -5,9 +5,10 @@ import Link from "next/link"
 interface GetStartedButtonProps {
   href: string
   className?: string
+  text?: string
 }
 
-export function GetStartedButton({ href, className = "" }: GetStartedButtonProps) {
+export function GetStartedButton({ href, className = "", text = "Get Started" }: GetStartedButtonProps) {
   return (
     <motion.div
       whileHover={{ scale: 1.05 }}
@@ -17,7 +18,7 @@ export function GetStartedButton({ href, className = "" }: GetStartedButtonProps
         href={href}
         className={`inline-flex items-center px-8 py-4 rounded-full bg-brand-200 text-white font-semibold shadow-lg hover:shadow-xl hover:bg-brand-300 transition-all duration-300 ${className}`}
       >
-        Get Started
+        {text}
         <motion.div
           animate={{ x: [0, 5, 0] }}
           transition={{ duration: 1.5, repeat: Infinity }}

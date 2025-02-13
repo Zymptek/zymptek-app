@@ -4,7 +4,7 @@
 import { Suspense, useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
-import { Loading } from '@/components/Loading';
+import { Loading } from '@/components/loading';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { useToast } from '@/hooks/use-toast';
 import { AdminNav } from '@/components/shared/AdminNav';

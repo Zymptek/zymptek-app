@@ -4,7 +4,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useProductEditor } from '@/hooks/useProductEditor';
 import { useToast } from '@/hooks/use-toast';
-import { Loading } from '@/components/Loading';
+import { Loading } from '@/components/loading';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';

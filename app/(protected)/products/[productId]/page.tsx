@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useProductEditor } from '@/hooks/useProductEditor';
-import { Loading } from '@/components/Loading';
+import { Loading } from '@/components/loading';
 import { Carousel } from 'react-responsive-carousel';
 import AttributeSection from '@/components/product/AttributeSection';
 import PricingSection from '@/components/product/PricingSection';

@@ -5,7 +5,6 @@ import { Target, Lightbulb, Rocket } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
-import { AboutStoryData } from '@/lib/data/about'
 
 interface TimelineItemProps {
   icon: React.ReactNode
@@ -13,6 +12,100 @@ interface TimelineItemProps {
   description: string
   content: string
   index: number
+}
+
+interface AboutStoryProps {
+  data: {
+    story_header: {
+      id: number
+      badge: string
+      title: string
+      highlightedText: string
+      description: string
+    }
+    story_items: Array<{
+      id: number
+      title: string
+      description: string
+      content: string
+    }>
+  }
+}
+
+const storyIcons = [
+  <Target className="w-6 h-6" />,
+  <Lightbulb className="w-6 h-6" />,
+  <Rocket className="w-6 h-6" />
+];
+
+export function AboutStory({ data }: AboutStoryProps) {
+  return (
+    <section className="relative py-24 overflow-hidden bg-background-light">
+      {/* Background Pattern */}
+      <div className="absolute inset-0 tech-pattern opacity-10" />
+      
+      <div className="container mx-auto px-4">
+        <div className="max-w-4xl mx-auto text-center mb-20">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+          >
+            <Badge 
+              variant="outline" 
+              className="px-8 py-3 text-base font-semibold text-brand-200 border-brand-200/20 mb-8"
+            >
+              {data.story_header.badge}
+            </Badge>
+          </motion.div>
+
+          <motion.h2
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            className="text-4xl md:text-5xl font-bold text-text-light mb-6"
+          >
+            {data.story_header.title}
+            <span className="text-brand-200 ml-2">{data.story_header.highlightedText}</span>
+          </motion.h2>
+
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="text-xl text-brand-400 leading-relaxed"
+          >
+            {data.story_header.description}
+          </motion.p>
+        </div>
+
+        {/* Timeline Container */}
+        <div className="relative max-w-6xl sm:mx-auto w-full px-2 sm:px-0">
+          {/* Main Vertical Line */}
+          <div className="hidden sm:block absolute left-1/2 transform -translate-x-1/2 w-0.5 h-full">
+            <div className="h-full bg-gradient-to-b from-brand-200 via-brand-300 to-brand-200" />
+          </div>
+          
+          {/* Timeline Items */}
+          <div className="relative text-brand-400 antialiased text-sm font-semibold">
+            {data.story_items.map((item, index) => (
+              <TimelineItem
+                key={item.id}
+                icon={storyIcons[index % storyIcons.length]}
+                title={item.title}
+                description={item.description}
+                content={item.content}
+                index={index}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  )
 }
 
 function TimelineItem({ icon, title, description, content, index }: TimelineItemProps) {
@@ -113,85 +206,5 @@ function TimelineItem({ icon, title, description, content, index }: TimelineItem
         </Card>
       </motion.div>
     </div>
-  )
-}
-
-interface AboutStoryProps {
-  data: AboutStoryData
-}
-
-const storyIcons = [
-  <Target className="w-6 h-6" />,
-  <Lightbulb className="w-6 h-6" />,
-  <Rocket className="w-6 h-6" />
-];
-
-export function AboutStory({ data }: AboutStoryProps) {
-  return (
-    <section className="relative py-24 overflow-hidden bg-background-light">
-      {/* Background Pattern */}
-      <div className="absolute inset-0 tech-pattern opacity-10" />
-      
-      <div className="container mx-auto px-4">
-        <div className="max-w-4xl mx-auto text-center mb-20">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5 }}
-          >
-            <Badge 
-              variant="outline" 
-              className="px-8 py-3 text-base font-semibold text-brand-200 border-brand-200/20 mb-8"
-            >
-              {data.header.badge}
-            </Badge>
-          </motion.div>
-
-          <motion.h2
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: 0.1 }}
-            className="text-4xl md:text-5xl font-bold text-text-light mb-6"
-          >
-            {data.header.title}
-            <span className="text-brand-200 ml-2">{data.header.highlightedText}</span>
-          </motion.h2>
-
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-            className="text-xl text-brand-400 leading-relaxed"
-          >
-            {data.header.description}
-          </motion.p>
-        </div>
-
-        {/* Timeline Container */}
-        <div className="relative max-w-6xl sm:mx-auto w-full px-2 sm:px-0">
-          {/* Main Vertical Line */}
-          <div className="hidden sm:block absolute left-1/2 transform -translate-x-1/2 w-0.5 h-full">
-            <div className="h-full bg-gradient-to-b from-brand-200 via-brand-300 to-brand-200" />
-          </div>
-          
-          {/* Timeline Items */}
-          <div className="relative text-brand-400 antialiased text-sm font-semibold">
-            {data.items.map((item, index) => (
-              <TimelineItem
-                key={index}
-                icon={storyIcons[index % storyIcons.length]}
-                title={item.title}
-                description={item.description}
-                content={item.content}
-                index={index}
-              />
-            ))}
-          </div>
-        </div>
-      </div>
-    </section>
   )
 }

@@ -5,7 +5,7 @@ import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import SellerCard from '@/components/home/SellerCard';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Database, Tables } from '@/lib/database.types';
-import { Loading } from '@/components/Loading';
+import { Loading } from '@/components/loading';
 import { useInView } from 'react-intersection-observer';
 import { SellerData } from './types';
 import { useSearchParams } from 'next/navigation';
