@@ -6,7 +6,7 @@ import ProductCard from '@/components/home/ProductCard';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Database, Tables } from '@/lib/database.types';
 import { Filter } from 'lucide-react';
-import { Loading } from '@/components/Loading';
+import { Loading } from '@/components/loading';
 import { useInView } from 'react-intersection-observer';
 import { useRouter, useSearchParams } from 'next/navigation';
 

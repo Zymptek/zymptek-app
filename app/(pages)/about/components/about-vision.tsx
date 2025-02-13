@@ -51,7 +51,7 @@ export default function AboutVision({ data }: AboutVisionProps) {
             transition={{ duration: 0.5 }}
             className="inline-flex items-center px-8 py-3 rounded-full bg-brand-100/10 border border-brand-200/20 shadow-sm mb-8"
           >
-            <span className="text-base font-semibold text-brand-200 tracking-wide uppercase">{data.vision_title}</span>
+            <span className="text-base font-semibold text-brand-200 tracking-wide uppercase">Our Vision</span>
           </motion.div>
 
           <motion.h2
@@ -61,8 +61,8 @@ export default function AboutVision({ data }: AboutVisionProps) {
             transition={{ duration: 0.5, delay: 0.1 }}
             className="text-4xl md:text-5xl font-bold text-text-light mb-6"
           >
-            Transforming Global Trade Through
-            <span className="text-brand-200 ml-2">Innovation</span>
+            {data.vision_title.split(' ').slice(0, -1).join(' ')}
+            <span className="text-brand-200 ml-2">{data.vision_title.split(' ').pop()}</span>
           </motion.h2>
 
           <motion.p

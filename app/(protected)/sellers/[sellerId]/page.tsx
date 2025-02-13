@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { SellerProfileCards } from '@/components/seller-profile/seller-profile-card/SellerProfileCard';
 import StickySubNav from '@/components/seller-profile/StickySubNav';
 import StickyContactCard from '@/components/seller-profile/StickyContactCard';
-import { Loading } from '@/components/Loading';
+import { Loading } from '@/components/loading';
 import { z } from 'zod';
 import { notFound, useRouter } from 'next/navigation';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';

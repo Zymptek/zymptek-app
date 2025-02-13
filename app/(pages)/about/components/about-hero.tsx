@@ -1,46 +1,25 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { ArrowRight, CheckCircle2, ShieldCheck, Clock, Wallet } from "lucide-react"
+import { CheckCircle2, ShieldCheck, Clock, Wallet } from "lucide-react"
 import { GetStartedButton } from "./get-started-button"
+import type { AboutHeroSection, AboutFeature, AboutCTASection } from "@/lib/types/sanity/about"
 
 interface FeatureCardProps {
-  icon: React.ReactNode
-  label: string
-  description: string
-  delay?: number
+  icon: React.ReactNode;
+  label: string;
+  description: string;
+  delay?: number;
 }
 
-interface StrapiFeature {
-  id: number
-  icon: "shield" | "wallet" | "check" | "clock"
-  label: string
-  description: string
-}
-
-interface AboutHeroProps {
-  data: {
-    hero_title_start: string
-    hero_title_highlight: string
-    hero_title_end: string
-    hero_subtitle: string
-    hero_description: string
-    hero_features: StrapiFeature[]
-    cta_button_text: string
-    cta_button_link: string
-  }
-}
-
-export default function AboutHero({ data }: AboutHeroProps) {
-  const { 
+export default function AboutHero({ data, cta }: { data: AboutHeroSection, cta: AboutCTASection }) {
+  const {
     hero_title_start,
     hero_title_highlight,
     hero_title_end,
     hero_subtitle,
     hero_description,
     hero_features,
-    cta_button_text,
-    cta_button_link
   } = data;
 
   return (
@@ -84,7 +63,7 @@ export default function AboutHero({ data }: AboutHeroProps) {
                   className="inline-flex items-center px-6 py-2 rounded-full bg-brand-100/10 border border-brand-200/20 shadow-sm hover:shadow-md transition-all duration-300"
                 >
                   <span className="w-2 h-2 rounded-full bg-brand-200 animate-pulse mr-2"></span>
-                  <span className="text-sm font-medium text-brand-200 tracking-wide uppercase">{hero_subtitle}</span>
+                  <span className="text-sm font-medium text-brand-200 tracking-wide uppercase">About us</span>
                 </motion.div>
 
                 <motion.h1
@@ -122,8 +101,8 @@ export default function AboutHero({ data }: AboutHeroProps) {
                   className="flex flex-wrap gap-6 pt-8"
                 >
                   <GetStartedButton 
-                    href={cta_button_link} 
-                    text={cta_button_text}
+                    href={cta.cta_button_link} 
+                    text={cta.cta_button_text}
                   />
                   <motion.button 
                     whileHover={{ scale: 1.05 }}
@@ -158,7 +137,7 @@ export default function AboutHero({ data }: AboutHeroProps) {
                   <div className="grid gap-8">
                     {hero_features.map((feature) => (
                       <FeatureCard
-                        key={feature.id}
+                        key={feature._key}
                         icon={getFeatureIcon(feature.icon)}
                         label={feature.label}
                         description={feature.description}
@@ -176,7 +155,7 @@ export default function AboutHero({ data }: AboutHeroProps) {
   )
 }
 
-function getFeatureIcon(iconName: "shield" | "wallet" | "check" | "clock") {
+function getFeatureIcon(iconName: "shield" | "wallet" | "check" | "clock"): React.ReactNode {
   const icons = {
     'shield': <ShieldCheck className="w-7 h-7 text-brand-200" />,
     'wallet': <Wallet className="w-7 h-7 text-brand-200" />,

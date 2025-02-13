@@ -5,7 +5,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import { useAuth } from '@/context/AuthContext';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { useToast } from '@/hooks/use-toast';
-import { Loading } from '@/components/Loading';
+import { Loading } from '@/components/loading';
 import { DynamicProductForm } from '@/components/create-product/DynamicProductForm';
 import { handleProductSubmit } from '@/lib/product/productSubmission';
 import { useRouter } from 'next/navigation';
