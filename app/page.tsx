@@ -1,14 +1,21 @@
 import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 import HomeClient from '@/components/home/home-client';
+import { getHeroContent } from '@/lib/api/sanity/hero';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 3600; // Revalidate every hour
 
+export const metadata = {
+  title: 'Home Page | Zymptek',
+  description: 'Welcome to our B2B marketplace. Explore our latest products and categories.',
+  keywords: ['B2B', 'marketplace', 'products', 'shopping', 'online store'],
+};
+
 export default async function Home() {
-  await new Promise((resolve) => setTimeout(resolve, 5000));
   const cookieStore = cookies();
   const supabase = createServerComponentClient({ cookies: () => cookieStore });
+  const heroContent = await getHeroContent();
 
   try {
     const [productsResponse, categoriesResponse, subcategoriesResponse] = await Promise.all([
@@ -36,6 +43,7 @@ export default async function Home() {
         initialProducts={productsResponse.data}
         initialCategories={categoriesResponse.data}
         initialSubcategories={subcategoriesResponse.data}
+        heroContent={heroContent}
       />
     );
   } catch (error) {

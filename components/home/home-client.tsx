@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { useState, useEffect, useRef } from 'react';
+import { motion, useInView } from 'framer-motion';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Swiper, SwiperSlide } from 'swiper/react';
@@ -14,6 +14,8 @@ import { Tables } from '@/lib/database.types';
 import { blogPosts } from '@/lib/data/blog-posts';
 import BlogCard from '@/components/blog/blog-card';
 import NewsletterForm from '@/components/home/newsletter-form';
+import Hero from '@/components/home/hero';
+import { HeroContent } from '@/lib/types/sanity/hero';
 
 type Product = Tables<'products'> & {
   shipping_info: {
@@ -27,23 +29,18 @@ interface HomeClientProps {
   initialProducts: Product[];
   initialCategories: Category[];
   initialSubcategories: Subcategory[];
+  heroContent: HeroContent;
 }
 
 export default function HomeClient({ 
   initialProducts, 
   initialCategories, 
-  initialSubcategories 
+  initialSubcategories,
+  heroContent 
 }: HomeClientProps) {
-  const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(
     initialCategories.length > 0 ? initialCategories[0].id : null
   );
-
-  const banners = [
-    { image: '/banner.png', title: 'Connect with Indian Exporters', description: 'Access a wide range of high-quality products' },
-    { image: '/banner2.png', title: 'Premium B2B Platform', description: 'Connecting global buyers with verified Indian manufacturers' },
-    { image: '/banner3.png', title: 'Expand Your Global Reach', description: 'Tap into the potential of Indian markets' },
-  ];
 
   /* Temporarily Hidden Testimonials
   const testimonials = [
@@ -58,69 +55,33 @@ export default function HomeClient({
   ];
   */
 
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentBannerIndex((prevIndex) => (prevIndex + 1) % banners.length);
-    }, 5000);
 
-    return () => clearInterval(timer);
-  }, []);
 
-  const staggerChildren = {
-    animate: {
-      transition: {
-        staggerChildren: 0.1
-      }
-    }
-  };
+  // Refs for scroll animations
+  const categoriesRef = useRef(null);
+  const whyChooseRef = useRef(null);
+  const newsletterRef = useRef(null);
+
+  // Check if sections are in view
+  const isCategoriesInView = useInView(categoriesRef, { once: true, amount: 0.3 });
+  const isWhyChooseInView = useInView(whyChooseRef, { once: true, amount: 0.3 });
+  const isNewsletterInView = useInView(newsletterRef, { once: true, amount: 0.3 });
 
   return (
     <div className="bg-background-light min-h-screen w-full">
-      <section className="mb-8 md:mb-16 w-full">
-        <div className="relative h-[300px] sm:h-[400px] md:h-[500px] lg:h-[600px] overflow-hidden shadow-xl">
-          {banners.map((banner, index) => (
-            <motion.div
-              key={index}
-              className="absolute inset-0"
-              initial={{ opacity: 0 }}
-              animate={{ 
-                opacity: index === currentBannerIndex ? 1 : 0,
-              }}
-              transition={{ duration: 0.8, ease: 'easeInOut' }}
-            >
-              <Image 
-                src={banner.image} 
-                alt={banner.title} 
-                fill
-                className="object-cover"
-                priority={index === 0}
-              />
-              <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-                <div className="text-white text-center max-w-2xl px-4">
-                  <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-2 md:mb-4">{banner.title}</h2>
-                  <p className="text-lg md:text-xl mb-4 md:mb-8">{banner.description}</p>
-                  <Link href="/products">
-                    <button className="bg-brand-200 text-white px-6 py-2 md:px-8 md:py-3 rounded-full text-base md:text-lg font-semibold hover:bg-brand-300 transition-colors">
-                      Explore Now
-                    </button>
-                  </Link>
-                </div>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-        <div className="flex justify-center mt-2 md:mt-4">
-          {banners.map((_, index) => (
-            <button
-              key={index}
-              className={`w-2 h-2 md:w-3 md:h-3 rounded-full mx-1 ${index === currentBannerIndex ? 'bg-brand-200' : 'bg-gray-300'}`}
-              onClick={() => setCurrentBannerIndex(index)}
-            />
-          ))}
-        </div>
-      </section>
+      <Hero categories={initialCategories} heroContent={heroContent} />
 
-      <section className="mb-8 md:mb-16 mx-4 md:mx-10 px-4 py-8 md:py-12 bg-gradient-to-r from-brand-100 to-brand-200 rounded-lg shadow-lg" id="categories">
+      <motion.section 
+        ref={categoriesRef}
+        className="mb-8 md:mb-16 mx-4 md:mx-10 px-4 py-8 md:py-12 bg-gradient-to-r from-brand-100 to-brand-200 rounded-lg shadow-lg"
+        initial={{ opacity: 0, y: 50 }}
+        animate={{ 
+          opacity: isCategoriesInView ? 1 : 0,
+          y: isCategoriesInView ? 0 : 50
+        }}
+        transition={{ duration: 0.6 }}
+        id="categories"
+      >
         <h2 className="text-2xl md:text-3xl font-bold mb-6 md:mb-8 text-white">Explore Categories</h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-4 mb-6 md:mb-8">
           {initialCategories.map((category) => (
@@ -157,7 +118,7 @@ export default function HomeClient({
               ))}
           </div>
         </div>
-      </section>
+      </motion.section>
 
       {/* Hot Deals Section - Temporarily Removed */}
       {/* <motion.section className="mb-8 md:mb-16" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
@@ -183,77 +144,104 @@ export default function HomeClient({
       </motion.section> */}
 
       {/* Why Choose Zymptek Section */}
-      <motion.section className="mb-8 md:mb-16 mx-4 md:mx-10 px-4 py-8 md:py-12" variants={staggerChildren} initial="initial" animate="animate">
-        <div className="text-center mb-10">
-          <h2 className="text-2xl md:text-3xl font-bold mb-4 text-brand-200">Why Choose Zymptek?</h2>
-          <p className="text-brand-300 text-lg max-w-2xl mx-auto">Experience the future of B2B trade with our comprehensive platform</p>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
-          <motion.div 
-            className="bg-gradient-to-br from-white to-brand-50 p-8 rounded-2xl shadow-lg border border-brand-100/20" 
-            initial={{ opacity: 0, y: 20 }} 
-            animate={{ opacity: 1, y: 0 }} 
-            transition={{ duration: 0.5 }} 
-            whileHover={{ 
-              scale: 1.02,
-              boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)"
+      <motion.section 
+        ref={whyChooseRef}
+        className="mb-6 md:mb-12 mx-4 md:mx-10 px-4 py-6 md:py-10"
+        initial={{ opacity: 0, y: 50 }}
+        animate={{ 
+          opacity: isWhyChooseInView ? 1 : 0,
+          y: isWhyChooseInView ? 0 : 50
+        }}
+        transition={{ duration: 0.6 }}
+      >
+        <div className="text-center mb-8">
+          <motion.h2 
+            className="text-xl md:text-2xl font-bold mb-3 text-brand-200"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ 
+              opacity: isWhyChooseInView ? 1 : 0,
+              y: isWhyChooseInView ? 0 : 20
             }}
+            transition={{ duration: 0.6, delay: 0.2 }}
           >
-            <div className="relative">
-              <div className="absolute -top-2 -left-2 w-16 h-16 bg-brand-100/10 rounded-2xl transform rotate-6"></div>
-              <div className="relative z-10 flex items-center justify-center w-14 h-14 mb-6 rounded-2xl bg-gradient-to-br from-brand-200 to-brand-300 text-white shadow-lg">
-                <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            Why Choose Zymptek?
+          </motion.h2>
+          <motion.p 
+            className="text-brand-300 text-sm md:text-base max-w-2xl mx-auto"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ 
+              opacity: isWhyChooseInView ? 1 : 0,
+              y: isWhyChooseInView ? 0 : 20
+            }}
+            transition={{ duration: 0.6, delay: 0.3 }}
+          >
+            Experience the future of B2B trade with our comprehensive platform
+          </motion.p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 max-w-6xl mx-auto">
+          {[
+            {
+              title: "Verified Suppliers",
+              description: "Our rigorous verification process ensures all suppliers meet international quality standards.",
+              icon: (
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                 </svg>
-              </div>
-            </div>
-            <h3 className="text-xl font-bold mb-4 text-brand-200">Verified Suppliers</h3>
-            <p className="text-brand-300 leading-relaxed">Our rigorous verification process ensures all suppliers meet international quality standards, compliance requirements, and business reliability criteria.</p>
-          </motion.div>
-
-          <motion.div 
-            className="bg-gradient-to-br from-white to-brand-50 p-8 rounded-2xl shadow-lg border border-brand-100/20" 
-            initial={{ opacity: 0, y: 20 }} 
-            animate={{ opacity: 1, y: 0 }} 
-            transition={{ duration: 0.5, delay: 0.1 }} 
-            whileHover={{ 
-              scale: 1.02,
-              boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)"
-            }}
-          >
-            <div className="relative">
-              <div className="absolute -top-2 -left-2 w-16 h-16 bg-brand-100/10 rounded-2xl transform -rotate-6"></div>
-              <div className="relative z-10 flex items-center justify-center w-14 h-14 mb-6 rounded-2xl bg-gradient-to-br from-brand-200 to-brand-300 text-white shadow-lg">
-                <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              ),
+              delay: 0.4
+            },
+            {
+              title: "Secure Transactions",
+              description: "End-to-end encrypted platform with secure payment gateways and trade protection.",
+              icon: (
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                 </svg>
-              </div>
-            </div>
-            <h3 className="text-xl font-bold mb-4 text-brand-200">Secure Transactions</h3>
-            <p className="text-brand-300 leading-relaxed">End-to-end encrypted platform with secure payment gateways, escrow services, and comprehensive trade protection measures for safe B2B transactions.</p>
-          </motion.div>
-
-          <motion.div 
-            className="bg-gradient-to-br from-white to-brand-50 p-8 rounded-2xl shadow-lg border border-brand-100/20" 
-            initial={{ opacity: 0, y: 20 }} 
-            animate={{ opacity: 1, y: 0 }} 
-            transition={{ duration: 0.5, delay: 0.2 }} 
-            whileHover={{ 
-              scale: 1.02,
-              boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)"
-            }}
-          >
-            <div className="relative">
-              <div className="absolute -top-2 -left-2 w-16 h-16 bg-brand-100/10 rounded-2xl transform rotate-12"></div>
-              <div className="relative z-10 flex items-center justify-center w-14 h-14 mb-6 rounded-2xl bg-gradient-to-br from-brand-200 to-brand-300 text-white shadow-lg">
-                <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              ),
+              delay: 0.5
+            },
+            {
+              title: "24/7 Support",
+              description: "Dedicated multilingual support team available round-the-clock to assist you.",
+              icon: (
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" />
                 </svg>
+              ),
+              delay: 0.6
+            }
+          ].map((item, index) => (
+            <motion.div
+              key={index}
+              className="group relative overflow-hidden"
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ 
+                opacity: isWhyChooseInView ? 1 : 0,
+                y: isWhyChooseInView ? 0 : 30
+              }}
+              transition={{ duration: 0.6, delay: item.delay }}
+              whileHover={{ scale: 1.02 }}
+            >
+              <div className="relative z-10 p-4 md:p-6 bg-gradient-to-br from-white/80 to-white/40 backdrop-blur-sm rounded-lg border border-brand-100/10 hover:border-brand-200/20 transition-all duration-300">
+                <div className="flex items-start gap-4">
+                  <div className="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-full bg-gradient-to-br from-brand-200 to-brand-300 text-white shadow-md group-hover:shadow-lg transition-all duration-300">
+                    {item.icon}
+                  </div>
+                  <div className="flex-grow">
+                    <h3 className="text-base md:text-lg font-semibold mb-1 text-brand-200 group-hover:text-brand-300 transition-colors duration-300">
+                      {item.title}
+                    </h3>
+                    <p className="text-sm text-brand-300/90 leading-relaxed">
+                      {item.description}
+                    </p>
+                  </div>
+                </div>
               </div>
-            </div>
-            <h3 className="text-xl font-bold mb-4 text-brand-200">24/7 Support</h3>
-            <p className="text-brand-300 leading-relaxed">Dedicated multilingual support team available round-the-clock to assist with sourcing, negotiations, and trade logistics across all time zones.</p>
-          </motion.div>
+              {/* Decorative gradient blob */}
+              <div className="absolute -inset-2 bg-gradient-to-r from-brand-100/20 via-brand-200/10 to-brand-300/20 opacity-0 group-hover:opacity-100 blur-xl transition-all duration-500 -z-10" />
+            </motion.div>
+          ))}
         </div>
       </motion.section>
 
@@ -445,15 +433,23 @@ export default function HomeClient({
       </motion.section> */}
 
       {/* Newsletter Section - Modified for Production */}
-      <section className="mx-4 md:mx-10 px-4 py-8 md:py-12">
-        <motion.section
-          variants={{
-            initial: { opacity: 0, y: 20 },
-            animate: { opacity: 1, y: 0 },
+      <motion.section 
+        ref={newsletterRef}
+        className="mx-4 md:mx-10 px-4 py-8 md:py-12"
+        initial={{ opacity: 0, y: 50 }}
+        animate={{ 
+          opacity: isNewsletterInView ? 1 : 0,
+          y: isNewsletterInView ? 0 : 50
+        }}
+        transition={{ duration: 0.6 }}
+      >
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ 
+            opacity: isNewsletterInView ? 1 : 0,
+            scale: isNewsletterInView ? 1 : 0.95
           }}
-          initial="initial"
-          animate="animate"
-          transition={{ duration: 0.5 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
         >
           <h2 className="text-2xl md:text-3xl font-bold mb-6 md:mb-8 text-brand-200">Stay Connected</h2>
           <div className="bg-white p-6 md:p-8 rounded-lg shadow-md">
@@ -461,8 +457,8 @@ export default function HomeClient({
             <p className="mb-4 md:mb-6 text-brand-300">Get updates on new suppliers, industry insights, and market opportunities.</p>
             <NewsletterForm />
           </div>
-        </motion.section>
-      </section>
+        </motion.div>
+      </motion.section>
     </div>
   );
 } 
