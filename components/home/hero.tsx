@@ -167,42 +167,56 @@ export default function Hero({ categories, heroContent }: HeroProps) {
         <div className="container mx-auto">
           <div className="relative px-4 sm:px-6 lg:px-8 pt-4">
             {/* Mobile-first Content */}
-            <div className="flex flex-col gap-4 lg:hidden">
-              <h1 className="text-2xl font-bold text-brand-200">
-                {heroContent.title.gradient}<br />
-                {heroContent.title.main}
-              </h1>
-              <p className="text-sm text-gray-600">
-                {heroContent.description}
-              </p>
+            <div className="flex flex-col lg:hidden min-h-screen bg-white">
+              <div className="flex-1 flex flex-col items-center justify-center px-6 -mt-16">
+                {/* Title Section */}
+                <div className="w-full max-w-md">
+                  <h1 className="text-[32px] leading-[1.2] font-medium">
+                    <span className="text-brand-200">Connect with</span>
+                    <br />
+                    <span className="text-brand-200">Indian Manufacturers</span>
+                  </h1>
+                  <p className="text-[15px] text-gray-600/90 mt-2 mb-8">
+                    Your trusted platform for discovering premium Indian suppliers..
+                  </p>
 
-              {/* Search Bar */}
-              <SearchBox 
-                variant="hero" 
-                placeholder={heroContent.searchPlaceholder}
-                className="w-full"
-              />
+                  {/* Search Container */}
+                  <div className="relative w-full">
+                    <SearchBox 
+                      variant="hero" 
+                      placeholder="Search manufacturers..."
+                      className="w-full"
+                    />
+                  </div>
 
-              {/* Stats Grid - Mobile */}
-              <div className="flex items-center justify-between py-3 px-2 bg-brand-100/5 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <svg className="w-4 h-4 text-brand-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                  </svg>
-                  <span className="text-xs text-brand-200 font-medium">Trusted Platform</span>
-                </div>
-                <div className="flex items-center divide-x divide-brand-200/10">
-                  <div className="px-3 text-center">
-                    <span className="block text-base font-bold text-brand-200">{heroContent.stats.products.number}</span>
-                    <span className="block text-[10px] uppercase tracking-wider text-gray-600 font-medium">{heroContent.stats.products.label}</span>
-                  </div>
-                  <div className="px-3 text-center">
-                    <span className="block text-base font-bold text-brand-200">{heroContent.stats.suppliers.number}</span>
-                    <span className="block text-[10px] uppercase tracking-wider text-gray-600 font-medium">{heroContent.stats.suppliers.label}</span>
-                  </div>
-                  <div className="px-3 text-center">
-                    <span className="block text-base font-bold text-brand-200">{heroContent.stats.countries.number}</span>
-                    <span className="block text-[10px] uppercase tracking-wider text-gray-600 font-medium">{heroContent.stats.countries.label}</span>
+                  {/* Trust Box */}
+                  <div className="mt-8 p-4 bg-white rounded-lg border border-gray-200 shadow-sm">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-r from-brand-200 to-brand-300 flex items-center justify-center">
+                        <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                        </svg>
+                      </div>
+                      <div>
+                        <div className="text-sm font-medium text-brand-200">Trusted Platform</div>
+                        <div className="text-xs text-gray-600">Verified by Industry Leaders</div>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-4 mt-4">
+                      <div className="text-center">
+                        <div className="text-xl font-bold text-brand-200">10K+</div>
+                        <div className="text-[10px] uppercase tracking-wider text-gray-600 mt-0.5">PRODUCTS</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-xl font-bold text-brand-200">5K+</div>
+                        <div className="text-[10px] uppercase tracking-wider text-gray-600 mt-0.5">SUPPLIERS</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-xl font-bold text-brand-200">2+</div>
+                        <div className="text-[10px] uppercase tracking-wider text-gray-600 mt-0.5">COUNTRIES</div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -333,3 +347,4 @@ export default function Hero({ categories, heroContent }: HeroProps) {
     </section>
   );
 }
+
