@@ -35,7 +35,9 @@ export async function getHeroContent(): Promise<HeroContent> {
 
   try {
     const data = await sanityFetch<HeroContent>({
-      query
+      query,
+      contentType: 'hero',
+      tags: ['hero']
     })
     return data
   } catch (error) {

@@ -1,4 +1,5 @@
 import { createClient, type ClientConfig } from 'next-sanity'
+import { getCacheDuration, CACHE_CONFIG } from '@/config/cache.config'
 
 // Environment configuration
 const environment = process.env.NODE_ENV || 'development'
@@ -27,31 +28,39 @@ if (!config.dataset) {
 export const client = createClient(config)
 
 // Constants for revalidation
-export const DEFAULT_REVALIDATE_DURATION = isPreviewMode ? 0 : 3600 // No cache in preview mode, 1 hour in production
 export const PREVIEW_REVALIDATE = 0 // No cache in preview mode
 
 // Tag constants for better organization and reuse
 export const SANITY_TAGS = {
-  ABOUT: 'about'
+  ABOUT: 'about',
+  HERO: 'hero',
+  TERMS: 'terms'
 } as const
+
+type SanityContentType = 'hero' | 'about' | 'terms' | 'default';
+type SanityCacheKey = `SANITY_${Uppercase<SanityContentType>}`;
 
 // GROQ query helper with types and improved caching
 export async function sanityFetch<QueryResponse>({
   query,
   params = {},
   tags = [],
-  revalidate = DEFAULT_REVALIDATE_DURATION,
+  contentType = 'default'
 }: {
   query: string
   params?: Record<string, unknown>
   tags?: string[]
-  revalidate?: number
+  contentType?: SanityContentType
 }): Promise<QueryResponse> {
   try {
+    // Get cache duration based on content type
+    const cacheKey = `SANITY_${contentType.toUpperCase()}` as SanityCacheKey
+    const revalidate = isPreviewMode ? 0 : getCacheDuration(cacheKey)
+
     const result = await client.fetch<QueryResponse>(query, params, {
       next: { 
         tags: [...tags, ...Object.values(SANITY_TAGS)],
-        revalidate: 0
+        revalidate
       }
     })
 

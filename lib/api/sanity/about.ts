@@ -55,7 +55,9 @@ export async function getAboutPage(): Promise<AboutPageResponse> {
 
   try {
     const data = await sanityFetch<AboutPageResponse>({
-      query
+      query,
+      contentType: 'about',
+      tags: ['about']
     })
     return data
   } catch (error) {

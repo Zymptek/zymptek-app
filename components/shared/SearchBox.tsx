@@ -202,6 +202,23 @@ export default function SearchBox({
         </div>
       )}
 
+      {/* No Results State */}
+      {!isLoading && !error && query && results.length === 0 && (
+        <motion.div 
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mt-3 text-center"
+        >
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-50 border border-gray-100">
+            <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" 
+                d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span className="text-sm text-gray-500">No matching products or categories found</span>
+          </div>
+        </motion.div>
+      )}
+
       {/* Error State */}
       {error && (
         <div className="mt-3 text-center text-sm text-red-500">
