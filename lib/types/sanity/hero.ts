@@ -1,5 +1,3 @@
-import { PortableTextBlock } from '@portabletext/types';
-
 export interface HeroContent {
   _id: string;
   _type: string;

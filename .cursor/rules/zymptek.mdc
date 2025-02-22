@@ -34,3 +34,7 @@ globs: *
     - Always use the config files if possible to make our work easy, for example (we wanted to add caching for different components , then create config file for caching time and write all the caching time there and use it whereever needed. Making easy to update in future)
     - Never update the [database.types.ts](mdc:lib/database.types.ts)
     - Also, you [database.types.ts](mdc:lib/database.types.ts) to check the current state of database and what tables are already present.
+    - must not duplicate the code
+    - make sure that don't hardcode even a single word if possible
+    - if changes are applying then start answer with smile emoji
+    

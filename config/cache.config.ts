@@ -6,10 +6,10 @@ export const CACHE_CONFIG = {
   CATEGORIES: 3600, // 1 hour
 
   // Sanity content cache durations
-  SANITY_HERO: 3600, // 1 hour (static content, can be cached longer)
+  SANITY_HOME: 7200, // 2 hours
   SANITY_ABOUT: 3600, // 1 hour
-  SANITY_TERMS: 7200, // 2 hours (rarely changes)
-  SANITY_DEFAULT: 3600, // 1 hour default for other Sanity content
+  SANITY_TERMS: 7200, // 2 hours
+  SANITY_DEFAULT: 3600, // 1 hour
 } as const;
 
 // Simple helper to get cache duration

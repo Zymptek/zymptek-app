@@ -1,59 +1,16 @@
 "use client";
 
-import { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
+import { useEffect } from 'react';
+import { motion, useScroll, useTransform } from 'framer-motion';
 import { DotLottieReact } from '@lottiefiles/dotlottie-react';
-import { Tables } from '@/lib/database.types';
 import { HeroContent } from '@/lib/types/sanity/hero';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-import Image from 'next/image';
-import Link from 'next/link';
-import { useProductsContext } from '@/context/ProductsContext';
-import { useSearch } from '@/context/SearchContext';
 import SearchBox from '@/components/shared/SearchBox';
 
-type Category = Tables<'categories'>;
-type Product = Tables<'products'>;
-
 interface HeroProps {
-  categories: Category[];
   heroContent: HeroContent;
 }
 
-// Update the searchDropdownStyles constant
-const searchDropdownStyles = {
-  base: `
-    bg-white/95 backdrop-blur-sm shadow-lg rounded-lg border border-gray-200
-    divide-y divide-gray-100
-    z-50 overflow-hidden
-  `,
-  mobile: `
-    fixed left-4 right-4 top-[72px]
-    max-h-[60vh] overflow-y-auto
-  `,
-  desktop: `
-    absolute top-full left-0 right-0 mt-2
-    w-full max-h-[400px] overflow-y-auto
-  `
-};
-
-export default function Hero({ categories, heroContent }: HeroProps) {
-  const {
-    query,
-    results,
-    suggestions,
-    isLoading,
-    error,
-    setQuery,
-    clearSearch,
-    performSearch,
-    recentSearches
-  } = useSearch();
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const [isSearchFocused, setIsSearchFocused] = useState(false);
-  const { trendingProducts } = useProductsContext();
-  const supabase = createClientComponentClient();
-  const searchRef = useRef<HTMLDivElement>(null);
+export default function Hero({ heroContent }: HeroProps) {
 
   // Scroll progress for navbar visibility
   const { scrollY } = useScroll();
@@ -76,36 +33,6 @@ export default function Hero({ categories, heroContent }: HeroProps) {
     };
   }, [scrollY, navbarOpacity, navbarTranslateY]);
 
-  // Handle click outside to close dropdown
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
-        setShowSuggestions(false);
-        setIsSearchFocused(false);
-      }
-    }
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  // Update suggestions visibility when query changes
-  useEffect(() => {
-    if (isSearchFocused) {
-      setShowSuggestions(true);
-    }
-  }, [query, isSearchFocused]);
-
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-      },
-    },
-  };
-
   const itemVariants = {
     hidden: { y: 20, opacity: 0 },
     visible: {
@@ -127,36 +54,6 @@ export default function Hero({ categories, heroContent }: HeroProps) {
         stiffness: 100,
         damping: 15
       }
-    }
-  };
-
-  const borderVariants = {
-    initial: {
-      background: "linear-gradient(90deg, var(--brand-100), var(--brand-200), var(--brand-300))",
-      backgroundSize: "200% 100%",
-    },
-    animate: {
-      backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
-      transition: {
-        duration: 3,
-        ease: "linear",
-        repeat: Infinity
-      }
-    }
-  };
-
-  // Handle search submit
-  const handleSearchSubmit = () => {
-    if (query.trim()) {
-      performSearch(query);
-      setShowSuggestions(true);
-    }
-  };
-
-  // Handle key press for search
-  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      handleSearchSubmit();
     }
   };
 
@@ -325,7 +222,6 @@ export default function Hero({ categories, heroContent }: HeroProps) {
                   </div>
                 </motion.div>
               </motion.div>
-
               {/* Right Content - Animation */}
               <motion.div
                 variants={itemVariants}

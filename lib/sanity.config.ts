@@ -34,10 +34,11 @@ export const PREVIEW_REVALIDATE = 0 // No cache in preview mode
 export const SANITY_TAGS = {
   ABOUT: 'about',
   HERO: 'hero',
+  HOME: 'home',
   TERMS: 'terms'
 } as const
 
-type SanityContentType = 'hero' | 'about' | 'terms' | 'default';
+type SanityContentType = 'home' | 'about' | 'terms' | 'default';
 type SanityCacheKey = `SANITY_${Uppercase<SanityContentType>}`;
 
 // GROQ query helper with types and improved caching

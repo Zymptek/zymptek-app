@@ -6,6 +6,9 @@ import { ChatProvider } from "@/context/ChatContext";
 import { CompanyProvider } from '@/context/CompanyContext';
 import { ProductsProvider } from '@/context/ProductsContext';
 import { SearchProvider } from '@/context/SearchContext';
+import { CategoriesProvider } from '@/context/CategoriesContext';
+import Footer from "@/components/shared/Footer";
+import DynamicNavbar from "@/components/shared/dynamic-navbar";
 
 const defaultUrl = process.env.VERCEL_URL
   ? `https://${process.env.VERCEL_URL}`
@@ -32,8 +35,13 @@ export default function RootLayout({
             <ProductsProvider>
               <SearchProvider>
                 <ChatProvider>
+                  <CategoriesProvider>
+                    <DynamicNavbar />
+                    {/* Navbar will be rendered inside each page where needed */}
                     {children}
+                    <Footer />
                     <Toaster />
+                  </CategoriesProvider>
                 </ChatProvider>
               </SearchProvider>
             </ProductsProvider>
