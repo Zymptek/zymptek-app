@@ -2,12 +2,13 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
 import { Toaster } from "@/components/ui/toaster";
-import NavbarWrapper from "@/components/home/navbar";
-import Footer from "@/components/home/Footer";
 import { ChatProvider } from "@/context/ChatContext";
 import { CompanyProvider } from '@/context/CompanyContext';
-
-export const dynamic = 'force-dynamic';
+import { ProductsProvider } from '@/context/ProductsContext';
+import { SearchProvider } from '@/context/SearchContext';
+import { CategoriesProvider } from '@/context/CategoriesContext';
+import Footer from "@/components/shared/Footer";
+import DynamicNavbar from "@/components/shared/dynamic-navbar";
 
 const defaultUrl = process.env.VERCEL_URL
   ? `https://${process.env.VERCEL_URL}`
@@ -21,7 +22,7 @@ export const metadata = {
   description: "Discover a world of opportunities with Zymptek, the premier online B2B marketplace. Connect with top manufacturers, suppliers, exporters, and importers globally. Whether you're sourcing products or seeking new markets, Zymptek offers a seamless platform to meet your business needs. Explore a vast range of industries and connect with trusted partners through our advanced network.",
 };
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
@@ -31,16 +32,19 @@ export default async function RootLayout({
       <body className="bg-background-light text-foreground">
         <AuthProvider>
           <CompanyProvider>
-            <ChatProvider>
-              <NavbarWrapper />
-              <main className="min-h-screen flex flex-col items-center">
-                <div className="flex flex-col gap-20 w-full">
-                  {children}
-                </div>
-                <Toaster />
-              </main>
-              <Footer />
-            </ChatProvider>
+            <ProductsProvider>
+              <SearchProvider>
+                <ChatProvider>
+                  <CategoriesProvider>
+                    <DynamicNavbar />
+                    {/* Navbar will be rendered inside each page where needed */}
+                    {children}
+                    <Footer />
+                    <Toaster />
+                  </CategoriesProvider>
+                </ChatProvider>
+              </SearchProvider>
+            </ProductsProvider>
           </CompanyProvider>
         </AuthProvider>
       </body>

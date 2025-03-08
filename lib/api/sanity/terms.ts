@@ -20,7 +20,8 @@ export async function getTermsOfServiceData(): Promise<TermsData> {
 
   const data = await sanityFetch<TermsData>({
     query,
-    tags: ["termsOfService"],
+    contentType: 'terms',
+    tags: ['terms']
   });
   return data;
 }
